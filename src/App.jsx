@@ -87,25 +87,11 @@ function isISBN(s) { return /^[\d\-\s]{9,17}$/.test(s.trim()) && s.replace(/[-\s
 function volToBook(vol) {
   const isbn13raw = vol.industryIdentifiers?.find(i => i.type === "ISBN_13")?.identifier ?? null;
   const isbn13 = isbn13raw ? normalizeIsbn13(isbn13raw) : null;
-<<<<<<< HEAD
-  // Build best possible cover URL from Google Books
-  let cover = null;
-  if (vol.imageLinks) {
-    // Prefer larger images, fix protocol, remove edge=curl for cleaner display
-    const raw = vol.imageLinks.medium || vol.imageLinks.small || vol.imageLinks.thumbnail || vol.imageLinks.smallThumbnail || null;
-    if (raw) {
-      cover = raw.replace("http:", "https:")
-                  .replace("&edge=curl", "")
-                  .replace("zoom=1", "zoom=2"); // request higher res
-    }
-  }
-=======
   // Use Open Library Covers API (free, no key, no rate limit) as primary cover source
   // Google Books thumbnails are unreliable (429 errors, broken URLs)
   const cover = isbn13
     ? `https://covers.openlibrary.org/b/isbn/${isbn13}-L.jpg?default=false`
     : (vol.imageLinks?.thumbnail?.replace("http:", "https:").replace("&edge=curl", "") || null);
->>>>>>> b246bd3 (Update cloud)
   return {
     type: "book", isbn13,
     title: vol.title || "Unknown",
@@ -115,11 +101,7 @@ function volToBook(vol) {
     pages: vol.pageCount || null,
     publishDate: vol.publishedDate || null,
     categories: vol.categories || [],
-<<<<<<< HEAD
-    url: vol.infoLink || (isbn13 ? `https://isbnsearch.org/isbn/${isbn13}` : "#"),
-=======
     url: vol.infoLink || (isbn13 ? `https://openlibrary.org/isbn/${isbn13}` : "#"),
->>>>>>> b246bd3 (Update cloud)
   };
 }
 
@@ -131,34 +113,6 @@ async function searchBooks(query) {
     const data = await res.json();
     if (data.items?.length) return data.items.map(item => volToBook(item.volumeInfo));
   }
-<<<<<<< HEAD
-  // Fallback: Korean National Library (NL) API — for Korean books or when Google fails
-  if (isIsbn) {
-    try {
-      const nlKey = typeof import.meta !== "undefined" && import.meta.env?.VITE_NL_API_KEY;
-      if (nlKey) {
-        const clean = query.replace(/[-\s]/g, "");
-        const nlRes = await fetch(`https://www.nl.go.kr/seoji/SearchApi.do?cert_key=${nlKey}&result_style=json&page_no=1&page_size=1&isbn=${clean}`);
-        if (nlRes.ok) {
-          const nlData = await nlRes.json();
-          const docs = nlData.docs;
-          if (docs?.length) {
-            const d = docs[0];
-            return [{
-              type: "book",
-              isbn13: normalizeIsbn13(d.EA_ISBN || clean),
-              title: d.TITLE || "Unknown",
-              subtitle: null,
-              author: d.AUTHOR || "Unknown",
-              cover: d.TITLE_URL || null,
-              pages: d.PAGE ? parseInt(d.PAGE) : null,
-              publishDate: d.PUBLISH_PREDATE || null,
-              categories: d.SUBJECT ? [d.SUBJECT] : [],
-              url: d.TITLE_URL || `https://isbnsearch.org/isbn/${clean}`,
-              publisher: d.PUBLISHER || null,
-            }];
-          }
-=======
   // Fallback: Korean National Library (NL) API via Cloudflare Worker proxy
   if (isIsbn && WORKER_URL) {
     try {
@@ -182,7 +136,6 @@ async function searchBooks(query) {
             url: d.EA_ISBN ? `https://openlibrary.org/isbn/${d.EA_ISBN}` : "#",
             publisher: d.PUBLISHER || null,
           }];
->>>>>>> b246bd3 (Update cloud)
         }
       }
     } catch {}
@@ -190,43 +143,6 @@ async function searchBooks(query) {
   throw new Error("No books found. Try a different title or ISBN-13.");
 }
 
-<<<<<<< HEAD
-// Spotify token cache
-let _spotifyToken = null;
-let _spotifyTokenExpiry = 0;
-
-async function getSpotifyToken() {
-  if (_spotifyToken && Date.now() < _spotifyTokenExpiry) return _spotifyToken;
-  const clientId = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SPOTIFY_CLIENT_ID) || "";
-  const clientSecret = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SPOTIFY_CLIENT_SECRET) || "";
-  if (!clientId || !clientSecret) return null;
-  try {
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent("https://accounts.spotify.com/api/token")}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Basic " + btoa(clientId + ":" + clientSecret),
-      },
-      body: "grant_type=client_credentials",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    _spotifyToken = data.access_token;
-    _spotifyTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
-    return _spotifyToken;
-  } catch { return null; }
-}
-
-async function searchMusic(query) {
-  const token = await getSpotifyToken();
-  if (!token) throw new Error("Spotify API not configured. Add VITE_SPOTIFY_CLIENT_ID and VITE_SPOTIFY_CLIENT_SECRET to your .env file.");
-  const res = await fetch(
-    `https://corsproxy.io/?${encodeURIComponent(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=8&market=US`)}`,
-    { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(8000) }
-  );
-  if (!res.ok) throw new Error("Failed to search Spotify");
-=======
 // ── Cloudflare Worker proxy URL ──
 // Set this to your deployed worker URL. Falls back to empty (features disabled).
 const WORKER_URL = (typeof import.meta !== "undefined" && import.meta.env?.VITE_WORKER_URL) || "";
@@ -235,7 +151,6 @@ async function searchMusic(query) {
   if (!WORKER_URL) throw new Error("Music search requires the Cloudflare Worker proxy. See README for setup.");
   const res = await fetch(`${WORKER_URL}/spotify/search?q=${encodeURIComponent(query)}`, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) { const e = await res.text().catch(() => ""); throw new Error(e || "Spotify search failed"); }
->>>>>>> b246bd3 (Update cloud)
   const data = await res.json();
   if (!data.tracks?.items?.length) throw new Error("No songs found. Try artist name or song title.");
   return data.tracks.items.map(t => ({
@@ -333,21 +248,12 @@ function BookCard({ media }) {
     <a href={media.url} target="_blank" rel="noopener noreferrer"
       style={{ display: "flex", gap: "16px", textDecoration: "none", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", borderRadius: "16px", padding: "16px", border: "1px solid #FDE68A", transition: "transform 0.2s" }}
       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = ""}>
-<<<<<<< HEAD
-      {media.cover
-        ? <img src={media.cover} alt={media.title} style={{ width: "80px", height: "120px", objectFit: "cover", borderRadius: "10px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", flexShrink: 0 }} />
-        : <div style={{ width: "80px", height: "120px", borderRadius: "10px", background: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", flexShrink: 0 }}>📖</div>}
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
-        <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", fontWeight: 600, color: "#B45309", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "6px" }}>
-          📚 Book{media.isbn13 ? ` · ISBN-13 ${media.isbn13}` : ""}
-=======
       {displayCover
         ? <img src={media.cover} alt={media.title} onError={() => setCoverErr(true)} style={{ width: "80px", height: "120px", objectFit: "cover", borderRadius: "10px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", flexShrink: 0 }} />
         : <div style={{ width: "80px", height: "120px", borderRadius: "10px", background: "linear-gradient(135deg, #D97706, #B45309)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", flexShrink: 0, color: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📖</div>}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
         <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", fontWeight: 600, color: "#B45309", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "6px" }}>
           📚 Book{media.isbn13 ? ` · ISBN ${media.isbn13}` : ""}
->>>>>>> b246bd3 (Update cloud)
         </div>
         <div style={{ fontFamily: "'Instrument Serif'", fontSize: "18px", color: "#1a1a1a", lineHeight: 1.3, marginBottom: "2px" }}>{media.title}</div>
         {media.subtitle && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#92400E", opacity: 0.8 }}>{media.subtitle}</div>}
@@ -966,13 +872,8 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
    SAMPLE DATA
    ═══════════════════════════════════════════════ */
 const SAMPLE_POSTS = [
-<<<<<<< HEAD
-  { id: 1, author: AVATARS[0], time: "12m ago", text: "Just finished this and I'm still processing it. One of the most important books of the decade.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://books.google.com/books/content?id=iDosDwAAQBAJ&printsec=frontcover&img=1&zoom=2", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://isbnsearch.org/isbn/9780525536512" }, reactions: [] },
-  { id: 7, author: AVATARS[5], time: "30m ago", text: "Re-reading this after 5 years. Hits completely different now.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://books.google.com/books/content?id=iDosDwAAQBAJ&printsec=frontcover&img=1&zoom=2", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://isbnsearch.org/isbn/9780525536512" }, reactions: [] },
-=======
   { id: 1, author: AVATARS[0], time: "12m ago", text: "Just finished this and I'm still processing it. One of the most important books of the decade.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://covers.openlibrary.org/b/isbn/9780525536512-L.jpg?default=false", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://openlibrary.org/isbn/9780525536512" }, reactions: [] },
   { id: 7, author: AVATARS[5], time: "30m ago", text: "Re-reading this after 5 years. Hits completely different now.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://covers.openlibrary.org/b/isbn/9780525536512-L.jpg?default=false", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://openlibrary.org/isbn/9780525536512" }, reactions: [] },
->>>>>>> b246bd3 (Update cloud)
   { id: 2, author: AVATARS[2], time: "1h ago", text: "This track has been on repeat all morning. The production is insane.", media: { type: "spotify", contentType: "track", spotifyId: "0VjIjW4GlUZAMYd2vXMi3b", title: "Blinding Lights", artist: "The Weeknd", album: "After Hours", artwork: null, releaseDate: "2020", url: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b" }, reactions: [] },
   { id: 8, author: AVATARS[3], time: "2h ago", text: "Watched this again last night. Still Bong Joon-ho's masterpiece.", media: { type: "movie", tmdbId: "496243", title: "Parasite", poster: "https://image.tmdb.org/t/p/w300/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", releaseDate: "2019", rating: 8.5, overview: "All unemployed, Ki-taek's family takes a peculiar interest in the wealthy and seemingly perfect Park family.", url: "https://www.themoviedb.org/movie/496243" }, reactions: [] },
   { id: 3, author: AVATARS[4], time: "3h ago", text: "Drop everything and watch this. Best explanation of how LLMs work.", media: { type: "youtube", youtubeId: "zjkBMFhNj_g", url: "https://www.youtube.com/watch?v=zjkBMFhNj_g" }, reactions: [] },
