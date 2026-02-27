@@ -105,15 +105,47 @@ async function searchBooks(query) {
   const isIsbn = isISBN(query);
   const q = isIsbn ? `isbn:${query.replace(/[-\s]/g, "")}` : encodeURIComponent(query);
   const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=${isIsbn ? 1 : 6}`);
-  if (!res.ok) throw new Error("Failed to search books");
-  const data = await res.json();
-  if (!data.items?.length) throw new Error("No books found. Try a different title or ISBN-13.");
-  return data.items.map(item => volToBook(item.volumeInfo));
+  if (res.ok) {
+    const data = await res.json();
+    if (data.items?.length) return data.items.map(item => volToBook(item.volumeInfo));
+  }
+  // Fallback: Korean National Library (NL) API — for Korean books or when Google fails
+  if (isIsbn) {
+    try {
+      const nlKey = typeof import.meta !== "undefined" && import.meta.env?.VITE_NL_API_KEY;
+      if (nlKey) {
+        const clean = query.replace(/[-\s]/g, "");
+        const nlRes = await fetch(`https://www.nl.go.kr/seoji/SearchApi.do?cert_key=${nlKey}&result_style=json&page_no=1&page_size=1&isbn=${clean}`);
+        if (nlRes.ok) {
+          const nlData = await nlRes.json();
+          const docs = nlData.docs;
+          if (docs?.length) {
+            const d = docs[0];
+            return [{
+              type: "book",
+              isbn13: normalizeIsbn13(d.EA_ISBN || clean),
+              title: d.TITLE || "Unknown",
+              subtitle: null,
+              author: d.AUTHOR || "Unknown",
+              cover: d.TITLE_URL || null,
+              pages: d.PAGE ? parseInt(d.PAGE) : null,
+              publishDate: d.PUBLISH_PREDATE || null,
+              categories: d.SUBJECT ? [d.SUBJECT] : [],
+              url: d.TITLE_URL || `https://isbnsearch.org/isbn/${clean}`,
+              publisher: d.PUBLISHER || null,
+            }];
+          }
+        }
+      }
+    } catch {}
+  }
+  throw new Error("No books found. Try a different title or ISBN-13.");
 }
 
 async function searchMusic(query) {
-  // iTunes Search API — free, no key needed. itunesId (trackId) is the canonical unique ID.
-  const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=8&entity=song`);
+  // iTunes Search API — free, no key needed. Use CORS proxy for browser access.
+  const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=8&entity=song`;
+  const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(itunesUrl)}`, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error("Failed to search music");
   const data = await res.json();
   if (!data.results?.length) throw new Error("No songs found. Try artist name or song title.");
@@ -758,6 +790,111 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange }) {
 }
 
 /* ═══════════════════════════════════════════════
+   GROUP SELECTOR
+   ═══════════════════════════════════════════════ */
+function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembers, clubData, excludedUsers, onExcludeUser }) {
+  const groups = [
+    { key: "random", icon: "🎲", label: "Random Circle", desc: `${randomMembers.length} members`, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
+    { key: "similar", icon: "🔗", label: "Shared Taste", desc: `${similarMembers.length} matches`, color: "#8B5CF6", bg: "#FDF4FF", border: "#E9D5FF" },
+    { key: "club", icon: "📖", label: "Club", desc: "Read together", color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
+  ];
+  const [showMembers, setShowMembers] = useState(false);
+
+  const currentMembers = activeGroup === "random" ? randomMembers : activeGroup === "similar" ? similarMembers : clubData.members;
+  const clubItemMedia = activeGroup === "club" && clubData.recommendedKey ? true : false;
+
+  return (
+    <div style={{ marginBottom: "16px" }}>
+      {/* Group tabs */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+        {groups.map(g => (
+          <button key={g.key} onClick={() => onGroupChange(g.key)}
+            style={{
+              flex: 1, padding: "12px 10px", borderRadius: "14px", cursor: "pointer",
+              background: activeGroup === g.key ? g.bg : "white",
+              border: `2px solid ${activeGroup === g.key ? g.color : "#E5E7EB"}`,
+              transition: "all 0.2s", textAlign: "center",
+            }}>
+            <div style={{ fontSize: "20px", marginBottom: "4px" }}>{g.icon}</div>
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", fontWeight: 600, color: activeGroup === g.key ? g.color : "#374151" }}>{g.label}</div>
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", color: "#9CA3AF" }}>{g.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Group info bar */}
+      <div style={{ background: "white", borderRadius: "14px", padding: "12px 16px", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: "flex" }}>
+            {currentMembers.slice(0, 5).map((m, i) => (
+              <div key={m.name} style={{
+                width: "28px", height: "28px", borderRadius: "50%", background: m.color,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px",
+                border: "2px solid white", marginLeft: i > 0 ? "-8px" : 0, zIndex: 5 - i,
+              }}>{m.emoji}</div>
+            ))}
+          </div>
+          <span style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280" }}>
+            {currentMembers.map(m => m.name).join(", ") || "No members yet"}
+          </span>
+        </div>
+        <button onClick={() => setShowMembers(!showMembers)} style={{
+          background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px",
+          cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280",
+        }}>{showMembers ? "Hide" : "Manage"}</button>
+      </div>
+
+      {/* Expanded member list */}
+      {showMembers && (
+        <div style={{ background: "white", borderRadius: "14px", padding: "12px", border: "1px solid #E5E7EB", marginTop: "8px" }}>
+          {activeGroup === "similar" && (
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginBottom: "8px" }}>
+              People who shared the same items as you. Exclude anyone you don't want to see.
+            </div>
+          )}
+          {activeGroup === "club" && clubData.recommendedKey && (
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#059669", marginBottom: "8px", padding: "8px 12px", background: "#ECFDF5", borderRadius: "10px" }}>
+              📖 Club recommendation: read/watch the same item and share your thoughts!
+            </div>
+          )}
+          {currentMembers.length === 0 && (
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", color: "#9CA3AF", textAlign: "center", padding: "16px" }}>
+              {activeGroup === "similar" ? "Share more items to find people with similar taste!" : "No members in this group"}
+            </div>
+          )}
+          {currentMembers.map(m => (
+            <div key={m.name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 4px", borderBottom: "1px solid #F3F4F6" }}>
+              <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>{m.emoji}</div>
+              <span style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 500, color: "#1a1a1a", flex: 1 }}>{m.name}</span>
+              {activeGroup === "similar" && (
+                <button onClick={() => onExcludeUser(m.name)} style={{
+                  background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px",
+                  padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#DC2626",
+                }}>Exclude</button>
+              )}
+            </div>
+          ))}
+          {activeGroup === "similar" && excludedUsers.length > 0 && (
+            <div style={{ marginTop: "8px" }}>
+              <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginBottom: "4px" }}>Excluded:</div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {excludedUsers.map(name => (
+                  <button key={name} onClick={() => onExcludeUser(name)} style={{
+                    background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px",
+                    cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280",
+                    textDecoration: "line-through",
+                  }}>{name} ✕</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
    SAMPLE DATA
    ═══════════════════════════════════════════════ */
 const SAMPLE_POSTS = [
@@ -781,11 +918,58 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [viewingItem, setViewingItem] = useState(null);
+  const [activeGroup, setActiveGroup] = useState("random");  // "random" | "similar" | "club"
+  const [excludedUsers, setExcludedUsers] = useState([]);    // names excluded from "similar" group
+  const [clubItem, setClubItem] = useState(null);             // media key for club recommendation
   const rIdRef = useRef(100);
+
+  // ── Group membership logic ──
+  // Random group: each user gets randomly assigned (deterministic by name hash for consistency)
+  const randomGroupMembers = useMemo(() => {
+    const allUsers = AVATARS.filter(a => a.name !== CURRENT_USER.name);
+    // Seed-based shuffle for consistency
+    const shuffled = [...allUsers].sort((a, b) => {
+      const ha = a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1);
+      const hb = b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1);
+      return ha - hb;
+    });
+    return shuffled.slice(0, 3); // 3 random members
+  }, []);
+
+  // Similar group: people who share the same items as you
+  const similarGroupMembers = useMemo(() => {
+    const myMediaKeys = new Set(posts.filter(p => p.author.name === CURRENT_USER.name).map(p => getMediaKey(p.media)).filter(Boolean));
+    const userOverlap = {};
+    posts.forEach(p => {
+      if (p.author.name === CURRENT_USER.name) return;
+      const key = getMediaKey(p.media);
+      if (key && myMediaKeys.has(key)) {
+        userOverlap[p.author.name] = (userOverlap[p.author.name] || 0) + 1;
+      }
+    });
+    return AVATARS.filter(a => a.name !== CURRENT_USER.name && userOverlap[a.name] && !excludedUsers.includes(a.name))
+      .sort((a, b) => (userOverlap[b.name] || 0) - (userOverlap[a.name] || 0));
+  }, [posts, excludedUsers]);
+
+  // Club: random pairing with a specific item recommendation
+  const clubData = useMemo(() => {
+    // Pick a random item that multiple people posted about
+    const keyCount = {};
+    posts.forEach(p => { const k = getMediaKey(p.media); if (k) keyCount[k] = (keyCount[k] || 0) + 1; });
+    const popular = Object.entries(keyCount).filter(([, c]) => c >= 1).sort((a, b) => b[1] - a[1]);
+    const recommendedKey = clubItem || (popular[0]?.[0] || null);
+    const members = AVATARS.filter(a => a.name !== CURRENT_USER.name).slice(0, 4);
+    return { recommendedKey, members };
+  }, [posts, clubItem]);
 
   const addReaction = useCallback((postId, emoji) => {
     const id = ++rIdRef.current;
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: [...p.reactions, { id, emoji }] } : p));
+    // One reaction per user per post — replace existing reaction from CURRENT_USER
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
+      return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
+    }));
   }, []);
   const removeReaction = useCallback((postId, rid) => {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
@@ -796,34 +980,55 @@ export default function App() {
 
   const filteredPosts = useMemo(() => {
     let result = posts;
-    // Type filter — Music tab matches both itunes and spotify
+
+    // ── Group filtering (only on feed page) ──
+    if (page === "feed") {
+      if (activeGroup === "random") {
+        const names = new Set([CURRENT_USER.name, ...randomGroupMembers.map(m => m.name)]);
+        result = result.filter(p => names.has(p.author.name));
+      } else if (activeGroup === "similar") {
+        const names = new Set([CURRENT_USER.name, ...similarGroupMembers.map(m => m.name)]);
+        result = result.filter(p => names.has(p.author.name));
+      } else if (activeGroup === "club") {
+        const names = new Set([CURRENT_USER.name, ...clubData.members.map(m => m.name)]);
+        result = result.filter(p => names.has(p.author.name));
+        // If there's a recommended item, prioritize posts about it
+        if (clubData.recommendedKey) {
+          result = result.sort((a, b) => {
+            const aMatch = getMediaKey(a.media) === clubData.recommendedKey ? 1 : 0;
+            const bMatch = getMediaKey(b.media) === clubData.recommendedKey ? 1 : 0;
+            return bMatch - aMatch;
+          });
+        }
+      }
+    }
+
+    // Type filter
     if (activeFilter !== "all") {
       result = result.filter(p => {
         if (activeFilter === "spotify") return p.media?.type === "spotify" || p.media?.type === "itunes";
         return p.media?.type === activeFilter;
       });
     }
-    // Search — media metadata only, never post body
+    // Search — media metadata only
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => {
         const m = p.media;
         if (!m) return false;
         const fields = [
-          m.title, m.subtitle, m.author, m.isbn13,   // books
+          m.title, m.subtitle, m.author, m.isbn13,
           ...(m.categories || []),
-          m.artist, m.album, m.genre,                 // music
-          m.overview,                                  // movies
-          m.channel,                                   // youtube
-          m.name, m.cuisine, m.location,              // places
-          m.displayUrl,                                // articles
-          m.releaseDate, m.tmdbId, m.itunesId,        // IDs as searchable strings
+          m.artist, m.album, m.genre,
+          m.overview, m.channel,
+          m.name, m.cuisine, m.location,
+          m.displayUrl, m.releaseDate, m.tmdbId, m.itunesId,
         ].filter(Boolean).join(" ").toLowerCase();
         return fields.includes(q);
       });
     }
     return result;
-  }, [posts, activeFilter, searchQuery]);
+  }, [posts, activeFilter, searchQuery, page, activeGroup, randomGroupMembers, similarGroupMembers, clubData, excludedUsers]);
 
   const handleViewItem = key => { setViewingItem(key); setPage("item"); };
 
@@ -860,6 +1065,14 @@ export default function App() {
                   <span style={{ fontFamily: "'DM Sans'", fontSize: "13px", color: "#6B7280", lineHeight: 1.4 }}>Share an item + your thoughts (max {MAX_WORDS} words). Reactions are <strong style={{ color: "#E8453C" }}>ephemeral</strong>. Click any item to see all thoughts.</span>
                 </div>
               )}
+              {page === "feed" && (
+                <GroupSelector
+                  activeGroup={activeGroup} onGroupChange={setActiveGroup}
+                  randomMembers={randomGroupMembers} similarMembers={similarGroupMembers}
+                  clubData={clubData} excludedUsers={excludedUsers}
+                  onExcludeUser={name => setExcludedUsers(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])}
+                />
+              )}
               {page === "search" && searchQuery && filteredPosts.length === 0 && (
                 <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
                   <div style={{ fontSize: "40px", marginBottom: "12px" }}>🔍</div>
@@ -868,9 +1081,16 @@ export default function App() {
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                {(page === "search" ? filteredPosts : posts).map(post => (
+                {filteredPosts.map(post => (
                   <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} />
                 ))}
+                {page === "feed" && filteredPosts.length === 0 && (
+                  <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
+                    <div style={{ fontSize: "40px", marginBottom: "12px" }}>{activeGroup === "similar" ? "🔗" : "🎲"}</div>
+                    <div style={{ fontSize: "15px" }}>No posts in this group yet</div>
+                    <div style={{ fontSize: "13px", marginTop: "4px" }}>{activeGroup === "similar" ? "Share more items to find people with similar taste!" : "Be the first to share something!"}</div>
+                  </div>
+                )}
               </div>
             </>
           )}
