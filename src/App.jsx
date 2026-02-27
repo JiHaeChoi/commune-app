@@ -71,7 +71,6 @@ function getMediaKey(media) {
   if (!media) return null;
   if (media.type === "book")    return media.isbn13 ? `book-${media.isbn13}` : `book-title-${media.title}`;
   if (media.type === "spotify" || media.type === "podcast") return `spotify-${media.spotifyId}`;
-  if (media.type === "itunes")  return `itunes-${media.itunesId}`;
   if (media.type === "movie")   return `tmdb-${media.tmdbId}`;
   if (media.type === "youtube") return `youtube-${media.youtubeId}`;
   if (media.type === "article") return `article-${canonicalUrl(media.url)}`;
@@ -88,12 +87,23 @@ function isISBN(s) { return /^[\d\-\s]{9,17}$/.test(s.trim()) && s.replace(/[-\s
 function volToBook(vol) {
   const isbn13raw = vol.industryIdentifiers?.find(i => i.type === "ISBN_13")?.identifier ?? null;
   const isbn13 = isbn13raw ? normalizeIsbn13(isbn13raw) : null;
+  // Build best possible cover URL from Google Books
+  let cover = null;
+  if (vol.imageLinks) {
+    // Prefer larger images, fix protocol, remove edge=curl for cleaner display
+    const raw = vol.imageLinks.medium || vol.imageLinks.small || vol.imageLinks.thumbnail || vol.imageLinks.smallThumbnail || null;
+    if (raw) {
+      cover = raw.replace("http:", "https:")
+                  .replace("&edge=curl", "")
+                  .replace("zoom=1", "zoom=2"); // request higher res
+    }
+  }
   return {
     type: "book", isbn13,
     title: vol.title || "Unknown",
     subtitle: vol.subtitle || null,
     author: (vol.authors || []).join(", ") || "Unknown",
-    cover: vol.imageLinks?.thumbnail?.replace("http:", "https:") || null,
+    cover,
     pages: vol.pageCount || null,
     publishDate: vol.publishedDate || null,
     categories: vol.categories || [],
@@ -142,24 +152,54 @@ async function searchBooks(query) {
   throw new Error("No books found. Try a different title or ISBN-13.");
 }
 
+// Spotify token cache
+let _spotifyToken = null;
+let _spotifyTokenExpiry = 0;
+
+async function getSpotifyToken() {
+  if (_spotifyToken && Date.now() < _spotifyTokenExpiry) return _spotifyToken;
+  const clientId = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SPOTIFY_CLIENT_ID) || "";
+  const clientSecret = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SPOTIFY_CLIENT_SECRET) || "";
+  if (!clientId || !clientSecret) return null;
+  try {
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent("https://accounts.spotify.com/api/token")}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: "Basic " + btoa(clientId + ":" + clientSecret),
+      },
+      body: "grant_type=client_credentials",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    _spotifyToken = data.access_token;
+    _spotifyTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
+    return _spotifyToken;
+  } catch { return null; }
+}
+
 async function searchMusic(query) {
-  // iTunes Search API — free, no key needed. Use CORS proxy for browser access.
-  const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=8&entity=song`;
-  const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(itunesUrl)}`, { signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error("Failed to search music");
+  const token = await getSpotifyToken();
+  if (!token) throw new Error("Spotify API not configured. Add VITE_SPOTIFY_CLIENT_ID and VITE_SPOTIFY_CLIENT_SECRET to your .env file.");
+  const res = await fetch(
+    `https://corsproxy.io/?${encodeURIComponent(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=8&market=US`)}`,
+    { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(8000) }
+  );
+  if (!res.ok) throw new Error("Failed to search Spotify");
   const data = await res.json();
-  if (!data.results?.length) throw new Error("No songs found. Try artist name or song title.");
-  return data.results.map(r => ({
-    type: "itunes",
-    itunesId: String(r.trackId),
-    title: r.trackName,
-    artist: r.artistName,
-    album: r.collectionName || null,
-    artwork: r.artworkUrl100?.replace("100x100bb", "300x300bb") || null,
-    previewUrl: r.previewUrl || null,
-    trackUrl: r.trackViewUrl || null,
-    releaseDate: r.releaseDate?.slice(0, 4) || null,
-    genre: r.primaryGenreName || null,
+  if (!data.tracks?.items?.length) throw new Error("No songs found. Try artist name or song title.");
+  return data.tracks.items.map(t => ({
+    type: "spotify",
+    contentType: "track",
+    spotifyId: t.id,
+    title: t.name,
+    artist: t.artists?.map(a => a.name).join(", ") || "Unknown",
+    album: t.album?.name || null,
+    artwork: t.album?.images?.[0]?.url || null,
+    releaseDate: t.album?.release_date?.slice(0, 4) || null,
+    genre: null,
+    url: t.external_urls?.spotify || `https://open.spotify.com/track/${t.id}`,
   }));
 }
 
@@ -268,37 +308,6 @@ function SpotifyCard({ media }) {
   );
 }
 
-function ItunesCard({ media }) {
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef(null);
-  const toggle = () => {
-    if (!audioRef.current) return;
-    if (playing) { audioRef.current.pause(); setPlaying(false); }
-    else { audioRef.current.play(); setPlaying(true); }
-  };
-  return (
-    <a href={media.trackUrl || "#"} target="_blank" rel="noopener noreferrer"
-      style={{ display: "flex", gap: "14px", alignItems: "center", background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", borderRadius: "16px", padding: "14px 16px", textDecoration: "none", border: "1px solid #A7F3D0" }}>
-      {media.artwork
-        ? <img src={media.artwork} alt={media.title} style={{ width: "64px", height: "64px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
-        : <div style={{ width: "64px", height: "64px", borderRadius: "10px", background: "#047857", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", flexShrink: 0 }}>🎵</div>}
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", fontWeight: 600, color: "#047857", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "4px" }}>🎵 Music · iTunes {media.itunesId}</div>
-        <div style={{ fontFamily: "'Instrument Serif'", fontSize: "17px", color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{media.title}</div>
-        <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#065F46" }}>{media.artist}{media.album ? ` · ${media.album}` : ""}{media.releaseDate ? ` · ${media.releaseDate}` : ""}</div>
-        {media.genre && <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", color: "#6B7280", marginTop: "2px" }}>{media.genre}</div>}
-      </div>
-      {media.previewUrl && (
-        <button onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(); }}
-          style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#047857", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", flexShrink: 0, color: "white" }}>
-          {playing ? "⏸" : "▶"}
-          <audio ref={audioRef} src={media.previewUrl} onEnded={() => setPlaying(false)} />
-        </button>
-      )}
-    </a>
-  );
-}
-
 function MovieCard({ media }) {
   return (
     <a href={media.url} target="_blank" rel="noopener noreferrer"
@@ -370,7 +379,6 @@ function MediaCard({ media, compact }) {
   if (!media) return null;
   if (media.type === "book")    return <BookCard media={media} />;
   if (media.type === "spotify" || media.type === "podcast") return <SpotifyCard media={media} />;
-  if (media.type === "itunes")  return <ItunesCard media={media} />;
   if (media.type === "movie")   return <MovieCard media={media} />;
   if (media.type === "youtube") return <YoutubeCard media={media} />;
   if (media.type === "article") return <ArticleCard media={media} />;
@@ -583,7 +591,7 @@ function ContentLinker({ onAdd }) {
         {t.artwork ? <img src={t.artwork} alt={t.title} style={{ width: "44px", height: "44px", borderRadius: "8px", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: "44px", height: "44px", borderRadius: "8px", background: "#D1FAE5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>🎵</div>}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
-          <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }}>{t.artist}{t.album ? ` · ${t.album}` : ""}{t.releaseDate ? ` · ${t.releaseDate}` : ""} · iTunes {t.itunesId}</div>
+          <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }}>{t.artist}{t.album ? ` · ${t.album}` : ""}{t.releaseDate ? ` · ${t.releaseDate}` : ""}</div>
         </div>
       </>)}
     />
@@ -898,9 +906,9 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
    SAMPLE DATA
    ═══════════════════════════════════════════════ */
 const SAMPLE_POSTS = [
-  { id: 1, author: AVATARS[0], time: "12m ago", text: "Just finished this and I'm still processing it. One of the most important books of the decade.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://books.google.com/books/content?id=iDosDwAAQBAJ&printsec=frontcover&img=1&zoom=1", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://isbnsearch.org/isbn/9780525536512" }, reactions: [] },
-  { id: 7, author: AVATARS[5], time: "30m ago", text: "Re-reading this after 5 years. Hits completely different now.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://books.google.com/books/content?id=iDosDwAAQBAJ&printsec=frontcover&img=1&zoom=1", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://isbnsearch.org/isbn/9780525536512" }, reactions: [] },
-  { id: 2, author: AVATARS[2], time: "1h ago", text: "This track has been on repeat all morning. The production is insane.", media: { type: "itunes", itunesId: "1440857631", title: "Karma Police", artist: "Radiohead", album: "OK Computer", artwork: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/9b/53/06/9b530688-0a44-1c56-4118-c8eca5f0cc79/source/300x300bb.jpg", previewUrl: null, trackUrl: "https://music.apple.com/us/album/karma-police/1109714933?i=1109715066", releaseDate: "1997", genre: "Alternative" }, reactions: [] },
+  { id: 1, author: AVATARS[0], time: "12m ago", text: "Just finished this and I'm still processing it. One of the most important books of the decade.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://books.google.com/books/content?id=iDosDwAAQBAJ&printsec=frontcover&img=1&zoom=2", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://isbnsearch.org/isbn/9780525536512" }, reactions: [] },
+  { id: 7, author: AVATARS[5], time: "30m ago", text: "Re-reading this after 5 years. Hits completely different now.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://books.google.com/books/content?id=iDosDwAAQBAJ&printsec=frontcover&img=1&zoom=2", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://isbnsearch.org/isbn/9780525536512" }, reactions: [] },
+  { id: 2, author: AVATARS[2], time: "1h ago", text: "This track has been on repeat all morning. The production is insane.", media: { type: "spotify", contentType: "track", spotifyId: "0VjIjW4GlUZAMYd2vXMi3b", title: "Blinding Lights", artist: "The Weeknd", album: "After Hours", artwork: null, releaseDate: "2020", url: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b" }, reactions: [] },
   { id: 8, author: AVATARS[3], time: "2h ago", text: "Watched this again last night. Still Bong Joon-ho's masterpiece.", media: { type: "movie", tmdbId: "496243", title: "Parasite", poster: "https://image.tmdb.org/t/p/w300/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", releaseDate: "2019", rating: 8.5, overview: "All unemployed, Ki-taek's family takes a peculiar interest in the wealthy and seemingly perfect Park family.", url: "https://www.themoviedb.org/movie/496243" }, reactions: [] },
   { id: 3, author: AVATARS[4], time: "3h ago", text: "Drop everything and watch this. Best explanation of how LLMs work.", media: { type: "youtube", youtubeId: "zjkBMFhNj_g", url: "https://www.youtube.com/watch?v=zjkBMFhNj_g" }, reactions: [] },
   { id: 4, author: AVATARS[3], time: "5h ago", text: "Found my new favorite spot for working remotely. The oat milk latte here is life-changing.", media: { type: "place", name: "Café Integral", cuisine: "Café", location: "Nolita, New York", note: "Try the cascara fizz", mapsUrl: null }, reactions: [] },
@@ -1006,7 +1014,7 @@ export default function App() {
     // Type filter
     if (activeFilter !== "all") {
       result = result.filter(p => {
-        if (activeFilter === "spotify") return p.media?.type === "spotify" || p.media?.type === "itunes";
+        if (activeFilter === "spotify") return p.media?.type === "spotify";
         return p.media?.type === activeFilter;
       });
     }
@@ -1022,7 +1030,7 @@ export default function App() {
           m.artist, m.album, m.genre,
           m.overview, m.channel,
           m.name, m.cuisine, m.location,
-          m.displayUrl, m.releaseDate, m.tmdbId, m.itunesId,
+          m.displayUrl, m.releaseDate, m.tmdbId,
         ].filter(Boolean).join(" ").toLowerCase();
         return fields.includes(q);
       });
