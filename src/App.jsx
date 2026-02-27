@@ -982,30 +982,6 @@ export default function App() {
     return { recommendedKey, members };
   }, [posts, clubItem]);
 
-  const addReaction = useCallback((postId, emoji) => {
-    const id = ++rIdRef.current;
-    setPosts(prev => prev.map(p => {
-      if (p.id !== postId) return p;
-      const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
-      return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
-    }));
-    apiAddReaction(postId, emoji, CURRENT_USER.name);
-  }, []);
-  const removeReaction = useCallback((postId, rid) => {
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
-  }, []);
-  const publishPost = useCallback(async (text, media) => {
-    const tempId = "temp-" + Date.now();
-    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
-    try {
-      const result = await apiCreatePost(CURRENT_USER, text, media);
-      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
-    } catch (err) {
-      console.error("publishPost error:", err);
-      // Keep the post in UI even if API fails (offline-friendly)
-    }
-  }, []);
-
   const filteredPosts = useMemo(() => {
     let result = posts;
 
