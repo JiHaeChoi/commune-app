@@ -836,45 +836,120 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
 }
 
 /* ═══════════════════════════════════════════════
-   SAMPLE DATA
+   API HELPERS
    ═══════════════════════════════════════════════ */
-const SAMPLE_POSTS = [
-  { id: 1, author: AVATARS[0], time: "12m ago", text: "Just finished this and I'm still processing it. One of the most important books of the decade.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://covers.openlibrary.org/b/isbn/9780525536512-L.jpg?default=false", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://openlibrary.org/isbn/9780525536512" }, reactions: [] },
-  { id: 7, author: AVATARS[5], time: "30m ago", text: "Re-reading this after 5 years. Hits completely different now.", media: { type: "book", isbn13: "9780525536512", title: "Digital Minimalism", subtitle: "Choosing a Focused Life in a Noisy World", author: "Cal Newport", cover: "https://covers.openlibrary.org/b/isbn/9780525536512-L.jpg?default=false", pages: 284, publishDate: "2019", categories: ["Self-Help"], url: "https://openlibrary.org/isbn/9780525536512" }, reactions: [] },
-  { id: 2, author: AVATARS[2], time: "1h ago", text: "This track has been on repeat all morning. The production is insane.", media: { type: "spotify", contentType: "track", spotifyId: "0VjIjW4GlUZAMYd2vXMi3b", title: "Blinding Lights", artist: "The Weeknd", album: "After Hours", artwork: null, releaseDate: "2020", url: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b" }, reactions: [] },
-  { id: 8, author: AVATARS[3], time: "2h ago", text: "Watched this again last night. Still Bong Joon-ho's masterpiece.", media: { type: "movie", tmdbId: "496243", title: "Parasite", poster: "https://image.tmdb.org/t/p/w300/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", releaseDate: "2019", rating: 8.5, overview: "All unemployed, Ki-taek's family takes a peculiar interest in the wealthy and seemingly perfect Park family.", url: "https://www.themoviedb.org/movie/496243" }, reactions: [] },
-  { id: 3, author: AVATARS[4], time: "3h ago", text: "Drop everything and watch this. Best explanation of how LLMs work.", media: { type: "youtube", youtubeId: "zjkBMFhNj_g", url: "https://www.youtube.com/watch?v=zjkBMFhNj_g" }, reactions: [] },
-  { id: 4, author: AVATARS[3], time: "5h ago", text: "Found my new favorite spot for working remotely. The oat milk latte here is life-changing.", media: { type: "place", name: "Café Integral", cuisine: "Café", location: "Nolita, New York", note: "Try the cascara fizz", mapsUrl: null }, reactions: [] },
-  { id: 5, author: AVATARS[5], time: "8h ago", text: "This essay changed how I think about productivity. Worth the 15 min read.", media: { type: "article", title: "The Tyranny of Time", url: "https://noemamag.com/the-tyranny-of-time", displayUrl: "noemamag.com" }, reactions: [] },
-  { id: 6, author: AVATARS[1], time: "10h ago", text: "Best Korean BBQ I've ever had outside of Seoul. The banchan alone is worth the trip.", media: { type: "place", name: "Kang Ho Dong Baekjeong", cuisine: "Korean BBQ", location: "Koreatown, Los Angeles", note: "Get the combo for 2", mapsUrl: null }, reactions: [] },
-];
+function timeAgo(dateStr) {
+  const now = new Date();
+  const d = new Date(dateStr + (dateStr.endsWith("Z") ? "" : "Z")); // ensure UTC
+  const diff = Math.max(0, now - d);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+async function fetchPosts() {
+  try {
+    const res = await fetch(`${WORKER_URL}/posts`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map(p => ({
+      id: p.id,
+      author: p.author,
+      time: timeAgo(p.createdAt),
+      text: p.text,
+      media: p.media,
+      reactions: p.reactions || [],
+    }));
+  } catch { return []; }
+}
+
+async function apiCreatePost(author, text, media) {
+  const res = await fetch(`${WORKER_URL}/posts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ author, text, media }),
+  });
+  if (!res.ok) throw new Error("Failed to create post");
+  return res.json();
+}
+
+async function apiAddReaction(postId, emoji, userName) {
+  try {
+    await fetch(`${WORKER_URL}/posts/${postId}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji, userName }),
+    });
+  } catch {}
+}
 
 /* ═══════════════════════════════════════════════
    APP
    ═══════════════════════════════════════════════ */
 export default function App() {
-  const [posts, setPosts] = useState(SAMPLE_POSTS);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);
   const [page, setPage] = useState("feed");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [viewingItem, setViewingItem] = useState(null);
-  const [activeGroup, setActiveGroup] = useState("random");  // "random" | "similar" | "club"
-  const [excludedUsers, setExcludedUsers] = useState([]);    // names excluded from "similar" group
-  const [clubItem, setClubItem] = useState(null);             // media key for club recommendation
+  const [activeGroup, setActiveGroup] = useState("random");
+  const [excludedUsers, setExcludedUsers] = useState([]);
+  const [clubItem, setClubItem] = useState(null);
   const rIdRef = useRef(100);
 
+  // Load posts from API on mount + auto-refresh every 30s
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const data = await fetchPosts();
+      if (active) { setPosts(data); setLoading(false); }
+    };
+    load();
+    const interval = setInterval(load, 300000); // 5분마다 새 포스트 확인
+    return () => { active = false; clearInterval(interval); };
+  }, []);
+
+  const addReaction = useCallback((postId, emoji) => {
+    const id = ++rIdRef.current;
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
+      return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
+    }));
+    // Fire-and-forget to API
+    apiAddReaction(postId, emoji, CURRENT_USER.name);
+  }, []);
+  const removeReaction = useCallback((postId, rid) => {
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
+  }, []);
+  const publishPost = useCallback(async (text, media) => {
+    // Optimistic UI update
+    const tempId = "temp-" + Date.now();
+    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
+    try {
+      const result = await apiCreatePost(CURRENT_USER, text, media);
+      // Replace temp ID with real ID
+      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
+    } catch {
+      // Remove on failure
+      setPosts(prev => prev.filter(p => p.id !== tempId));
+    }
+  }, []);
+
   // ── Group membership logic ──
-  // Random group: each user gets randomly assigned (deterministic by name hash for consistency)
   const randomGroupMembers = useMemo(() => {
     const allUsers = AVATARS.filter(a => a.name !== CURRENT_USER.name);
-    // Seed-based shuffle for consistency
     const shuffled = [...allUsers].sort((a, b) => {
       const ha = a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1);
       const hb = b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1);
       return ha - hb;
     });
-    return shuffled.slice(0, 3); // 3 random members
+    return shuffled.slice(0, 3);
   }, []);
 
   // Similar group: people who share the same items as you
@@ -905,35 +980,45 @@ export default function App() {
 
   const addReaction = useCallback((postId, emoji) => {
     const id = ++rIdRef.current;
-    // One reaction per user per post — replace existing reaction from CURRENT_USER
     setPosts(prev => prev.map(p => {
       if (p.id !== postId) return p;
       const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
       return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
     }));
+    apiAddReaction(postId, emoji, CURRENT_USER.name);
   }, []);
   const removeReaction = useCallback((postId, rid) => {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
   }, []);
-  const publishPost = useCallback((text, media) => {
-    setPosts(prev => [{ id: Date.now(), author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
+  const publishPost = useCallback(async (text, media) => {
+    // Optimistic UI update
+    const tempId = "temp-" + Date.now();
+    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
+    try {
+      const result = await apiCreatePost(CURRENT_USER, text, media);
+      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
+    } catch {
+      setPosts(prev => prev.filter(p => p.id !== tempId));
+    }
   }, []);
 
   const filteredPosts = useMemo(() => {
     let result = posts;
 
-    // ── Group filtering (only on feed page) ──
-    if (page === "feed") {
+    // ── Group filtering (only on feed page, only for known AVATAR users) ──
+    if (page === "feed" && activeGroup !== "all") {
+      const knownNames = new Set(AVATARS.map(a => a.name));
+      // Only apply group filter if posts are from known avatar users
+      // Real DB posts from unknown users always pass through
       if (activeGroup === "random") {
         const names = new Set([CURRENT_USER.name, ...randomGroupMembers.map(m => m.name)]);
-        result = result.filter(p => names.has(p.author.name));
+        result = result.filter(p => !knownNames.has(p.author?.name) || names.has(p.author?.name));
       } else if (activeGroup === "similar") {
         const names = new Set([CURRENT_USER.name, ...similarGroupMembers.map(m => m.name)]);
-        result = result.filter(p => names.has(p.author.name));
+        result = result.filter(p => !knownNames.has(p.author?.name) || names.has(p.author?.name));
       } else if (activeGroup === "club") {
         const names = new Set([CURRENT_USER.name, ...clubData.members.map(m => m.name)]);
-        result = result.filter(p => names.has(p.author.name));
-        // If there's a recommended item, prioritize posts about it
+        result = result.filter(p => !knownNames.has(p.author?.name) || names.has(p.author?.name));
         if (clubData.recommendedKey) {
           result = result.sort((a, b) => {
             const aMatch = getMediaKey(a.media) === clubData.recommendedKey ? 1 : 0;
@@ -1022,10 +1107,16 @@ export default function App() {
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                {filteredPosts.map(post => (
+                {loading && (
+                  <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
+                    <div style={{ fontSize: "24px", marginBottom: "8px", animation: "fadeIn 0.5s ease infinite alternate" }}>⏳</div>
+                    <div style={{ fontSize: "14px" }}>Loading posts...</div>
+                  </div>
+                )}
+                {!loading && filteredPosts.map(post => (
                   <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} />
                 ))}
-                {page === "feed" && filteredPosts.length === 0 && (
+                {!loading && page === "feed" && filteredPosts.length === 0 && (
                   <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
                     <div style={{ fontSize: "40px", marginBottom: "12px" }}>{activeGroup === "similar" ? "🔗" : "🎲"}</div>
                     <div style={{ fontSize: "15px" }}>No posts in this group yet</div>
