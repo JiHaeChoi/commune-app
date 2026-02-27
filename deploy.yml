@@ -33,9 +33,13 @@ jobs:
       - name: Build
         run: npm run build
         env:
+<<<<<<< HEAD
           VITE_NL_API_KEY: ${{ secrets.VITE_NL_API_KEY }}
           VITE_SPOTIFY_CLIENT_ID: ${{ secrets.VITE_SPOTIFY_CLIENT_ID }}
           VITE_SPOTIFY_CLIENT_SECRET: ${{ secrets.VITE_SPOTIFY_CLIENT_SECRET }}
+=======
+          VITE_WORKER_URL: ${{ vars.VITE_WORKER_URL }}
+>>>>>>> b246bd3 (Update cloud)
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

@@ -1,0 +1,11 @@
+name = "commune-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Set these in Cloudflare Dashboard → Workers → Settings → Variables
+# DO NOT put actual values here — this file is committed to git
+# [vars]
+# SPOTIFY_CLIENT_ID = ""
+# SPOTIFY_CLIENT_SECRET = ""
+# NL_API_KEY = ""
+# ALLOWED_ORIGIN = "https://yourname.github.io"
