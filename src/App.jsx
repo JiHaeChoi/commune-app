@@ -142,8 +142,7 @@ async function searchBooks(query) {
 }
 
 // ── Cloudflare Worker proxy URL ──
-// Set this to your deployed worker URL. Falls back to empty (features disabled).
-const WORKER_URL = (typeof import.meta !== "undefined" && import.meta.env?.VITE_WORKER_URL) || "";
+const WORKER_URL = (typeof import.meta !== "undefined" && import.meta.env?.VITE_WORKER_URL) || "https://commune-api.jiha9139.workers.dev";
 
 async function searchMusic(query) {
   if (!WORKER_URL) throw new Error("Music search requires the Cloudflare Worker proxy. See README for setup.");
