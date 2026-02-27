@@ -853,7 +853,7 @@ function timeAgo(dateStr) {
 async function fetchPosts() {
   try {
     const res = await fetch(`${WORKER_URL}/posts`, { signal: AbortSignal.timeout(10000) });
-    if (!res.ok) return [];
+    if (!res.ok) { console.error("fetchPosts failed:", res.status); return []; }
     const data = await res.json();
     return data.map(p => ({
       id: p.id,
@@ -863,16 +863,20 @@ async function fetchPosts() {
       media: p.media,
       reactions: p.reactions || [],
     }));
-  } catch { return []; }
+  } catch (err) { console.error("fetchPosts error:", err); return []; }
 }
 
 async function apiCreatePost(author, text, media) {
   const res = await fetch(`${WORKER_URL}/posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json; charset=utf-8" },
     body: JSON.stringify({ author, text, media }),
   });
-  if (!res.ok) throw new Error("Failed to create post");
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.error("apiCreatePost failed:", res.status, errText);
+    throw new Error("Failed to create post: " + errText);
+  }
   return res.json();
 }
 
@@ -991,34 +995,31 @@ export default function App() {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
   }, []);
   const publishPost = useCallback(async (text, media) => {
-    // Optimistic UI update
     const tempId = "temp-" + Date.now();
     setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
     try {
       const result = await apiCreatePost(CURRENT_USER, text, media);
       setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
-    } catch {
-      setPosts(prev => prev.filter(p => p.id !== tempId));
+    } catch (err) {
+      console.error("publishPost error:", err);
+      // Keep the post in UI even if API fails (offline-friendly)
     }
   }, []);
 
   const filteredPosts = useMemo(() => {
     let result = posts;
 
-    // ── Group filtering (only on feed page, only for known AVATAR users) ──
-    if (page === "feed" && activeGroup !== "all") {
-      const knownNames = new Set(AVATARS.map(a => a.name));
-      // Only apply group filter if posts are from known avatar users
-      // Real DB posts from unknown users always pass through
+    // ── Group filtering (feed page only — search page shows all) ──
+    if (page === "feed") {
       if (activeGroup === "random") {
         const names = new Set([CURRENT_USER.name, ...randomGroupMembers.map(m => m.name)]);
-        result = result.filter(p => !knownNames.has(p.author?.name) || names.has(p.author?.name));
+        result = result.filter(p => names.has(p.author?.name));
       } else if (activeGroup === "similar") {
         const names = new Set([CURRENT_USER.name, ...similarGroupMembers.map(m => m.name)]);
-        result = result.filter(p => !knownNames.has(p.author?.name) || names.has(p.author?.name));
+        result = result.filter(p => names.has(p.author?.name));
       } else if (activeGroup === "club") {
         const names = new Set([CURRENT_USER.name, ...clubData.members.map(m => m.name)]);
-        result = result.filter(p => !knownNames.has(p.author?.name) || names.has(p.author?.name));
+        result = result.filter(p => names.has(p.author?.name));
         if (clubData.recommendedKey) {
           result = result.sort((a, b) => {
             const aMatch = getMediaKey(a.media) === clubData.recommendedKey ? 1 : 0;
