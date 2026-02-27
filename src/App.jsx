@@ -21,7 +21,6 @@ const MEDIA_TYPES = [
   { key: "book",    icon: "📚", label: "Book",    bg: "#FFFBEB", border: "#FDE68A", text: "#B45309" },
   { key: "spotify", icon: "🎵", label: "Music",   bg: "#ECFDF5", border: "#A7F3D0", text: "#047857" },
   { key: "movie",   icon: "🎥", label: "Movie",   bg: "#FFF7ED", border: "#FED7AA", text: "#C2410C" },
-  { key: "youtube", icon: "🎬", label: "Video",   bg: "#FEF2F2", border: "#FECACA", text: "#B91C1C" },
   { key: "podcast", icon: "🎙️", label: "Podcast", bg: "#F0FDF4", border: "#BBF7D0", text: "#15803D" },
   { key: "article", icon: "📝", label: "Article", bg: "#EFF6FF", border: "#BFDBFE", text: "#1D4ED8" },
   { key: "place",   icon: "📍", label: "Place",   bg: "#FDF4FF", border: "#E9D5FF", text: "#7E22CE" },
@@ -32,7 +31,6 @@ const FILTER_TABS = [
   { key: "book",    icon: "📚", label: "Books" },
   { key: "spotify", icon: "🎵", label: "Music" },
   { key: "movie",   icon: "🎥", label: "Movies" },
-  { key: "youtube", icon: "🎬", label: "Videos" },
   { key: "place",   icon: "📍", label: "Places" },
   { key: "podcast", icon: "🎙️", label: "Podcasts" },
   { key: "article", icon: "📝", label: "Articles" },
@@ -164,23 +162,6 @@ async function searchMusic(query) {
     releaseDate: t.album?.release_date?.slice(0, 4) || null,
     genre: null,
     url: t.external_urls?.spotify || `https://open.spotify.com/track/${t.id}`,
-  }));
-}
-
-async function searchYoutube(query) {
-  // Invidious public API — free, no key. youtubeId is the canonical unique ID.
-  const res = await fetch(`https://inv.nadeko.net/api/v1/search?q=${encodeURIComponent(query)}&type=video&fields=videoId,title,author,publishedText,videoThumbnails`);
-  if (!res.ok) throw new Error("Failed to search videos");
-  const data = await res.json();
-  if (!Array.isArray(data) || !data.length) throw new Error("No videos found. Try a different title.");
-  return data.slice(0, 6).map(v => ({
-    type: "youtube",
-    youtubeId: v.videoId,
-    title: v.title,
-    channel: v.author,
-    published: v.publishedText,
-    thumbnail: v.videoThumbnails?.find(t => t.quality === "medium")?.url || v.videoThumbnails?.[0]?.url || null,
-    url: `https://www.youtube.com/watch?v=${v.videoId}`,
   }));
 }
 
@@ -516,7 +497,7 @@ function ContentLinker({ onAdd }) {
       } else if (mode === "youtube") {
         const v = parseYoutubeUrl(input);
         if (v) { onAdd({ type: "youtube", youtubeId: v, url: `https://www.youtube.com/watch?v=${v}` }); reset(); }
-        else { const items = await searchYoutube(input.trim()); setResults({ kind: "video", items }); }
+        else throw new Error("Paste a YouTube video URL.");
       } else if (mode === "movie") {
         const items = await searchMovies(input.trim());
         if (items.length === 1) { onAdd(items[0]); reset(); }
@@ -558,18 +539,6 @@ function ContentLinker({ onAdd }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
           <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }}>{t.artist}{t.album ? ` · ${t.album}` : ""}{t.releaseDate ? ` · ${t.releaseDate}` : ""}</div>
-        </div>
-      </>)}
-    />
-  );
-
-  if (results?.kind === "video") return (
-    <ResultPicker title="🎬 Pick a video" items={results.items} onReset={reset} onSelect={item => { onAdd(item); reset(); }}
-      renderItem={v => (<>
-        {v.thumbnail ? <img src={v.thumbnail} alt={v.title} style={{ width: "72px", height: "46px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }} /> : <div style={{ width: "72px", height: "46px", borderRadius: "6px", background: "#FECACA", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>🎬</div>}
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.title}</div>
-          <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }}>{v.channel}{v.published ? ` · ${v.published}` : ""}</div>
         </div>
       </>)}
     />
@@ -618,13 +587,12 @@ function ContentLinker({ onAdd }) {
     book:    "Title, author, or ISBN-13 — e.g. \"Digital Minimalism\" or 9780525536512",
     spotify: "Artist or song title — e.g. \"Radiohead\" or \"Karma Police\"",
     movie:   "Movie title — e.g. \"Parasite\" or \"Everything Everywhere\"",
-    youtube: "Video title or paste YouTube link",
     podcast: "Paste Spotify podcast episode/show link (https only)",
     article: "Paste article URL (https only)",
   };
   const btnLabel = () => {
     if (loading) return "...";
-    if ((mode === "spotify" && !parseSpotifyUrl(input)) || mode === "movie" || (mode === "youtube" && !parseYoutubeUrl(input))) return "Search";
+    if ((mode === "spotify" && !parseSpotifyUrl(input)) || mode === "movie") return "Search";
     return "Add";
   };
   return (
