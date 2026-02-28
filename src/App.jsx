@@ -509,6 +509,9 @@ function PlaceLinker({ onAdd }) {
   const [showDrop, setShowDrop] = useState(false);
   const [cf, setCf] = useState("");
   const [mq, setMq] = useState("");
+  const [placeSearch, setPlaceSearch] = useState("");
+  const [placeResults, setPlaceResults] = useState(null);
+  const [placeLoading, setPlaceLoading] = useState(false);
   const db = useRef(null);
   const handleUrlPaste = v => { setMapsUrl(v); if (isGoogleMapsUrl(v)) { const p = parseGoogleMapsUrl(v); if (p.name) setName(p.name); } };
   useEffect(() => {
@@ -518,17 +521,72 @@ function PlaceLinker({ onAdd }) {
   }, [name, location]);
   const filtered = CUISINE_OPTIONS.filter(c => c.toLowerCase().includes(cf.toLowerCase()));
   const handleAdd = () => { if (!name.trim()) return; onAdd({ type: "place", name: name.trim(), cuisine: cuisine || null, location: location.trim() || null, mapsUrl: mapsUrl.trim() || null }); };
+
+  const handlePlaceSearch = async () => {
+    if (!placeSearch.trim()) return;
+    setPlaceLoading(true);
+    try {
+      const data = await apiSearchPlaces(placeSearch);
+      setPlaceResults(data.places || []);
+    } catch { setPlaceResults([]); }
+    setPlaceLoading(false);
+  };
+
+  const selectPlace = (place) => {
+    onAdd({
+      type: "place",
+      name: place.displayName?.text || place.displayName || "Unknown",
+      location: place.formattedAddress || null,
+      cuisine: place.types?.[0]?.replace(/_/g, " ") || null,
+      mapsUrl: place.googleMapsUri || null,
+      placeId: place.id || null,
+      rating: place.rating || null,
+      lat: place.location?.latitude || null,
+      lng: place.location?.longitude || null,
+    });
+  };
+
   const IS = { border: "1px solid #D1D5DB", borderRadius: "10px", padding: "10px 14px", fontFamily: "'DM Sans'", fontSize: "13px", outline: "none", background: "white", width: "100%" };
+
   if (!mode) return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <button onClick={() => setMode("url")} style={{ background: "#FDF4FF", border: "1px solid #E9D5FF", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "24px" }}>🔗</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#7E22CE" }}>Paste Google Maps link</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Auto-fills place name</div></div>
+      <button onClick={() => setMode("search")} style={{ background: "#FDF4FF", border: "1px solid #E9D5FF", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={{ fontSize: "24px" }}>🔍</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#7E22CE" }}>Search places</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Google Places powered</div></div>
+      </button>
+      <button onClick={() => setMode("url")} style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={{ fontSize: "24px" }}>🔗</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#374151" }}>Paste Google Maps link</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Auto-fills place name</div></div>
       </button>
       <button onClick={() => setMode("manual")} style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
         <span style={{ fontSize: "24px" }}>✏️</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#374151" }}>Enter manually</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Type name, cuisine, location</div></div>
       </button>
     </div>
   );
+
+  if (mode === "search") return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div style={{ display: "flex", gap: "8px" }}>
+        <input value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handlePlaceSearch()} placeholder="e.g. Korean BBQ Chicago, Blue Bottle Tokyo..." style={IS} autoFocus />
+        <button onClick={handlePlaceSearch} disabled={placeLoading} style={{ background: "#7E22CE", border: "none", borderRadius: "10px", padding: "10px 18px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 500, whiteSpace: "nowrap" }}>{placeLoading ? "..." : "Search"}</button>
+      </div>
+      {placeResults && placeResults.length === 0 && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", textAlign: "center", padding: "12px" }}>No results found</div>}
+      {placeResults && placeResults.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "300px", overflowY: "auto" }}>
+          {placeResults.slice(0, 6).map((p, i) => (
+            <button key={i} onClick={() => selectPlace(p)} style={{ display: "flex", gap: "12px", alignItems: "center", background: "white", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px 14px", cursor: "pointer", textAlign: "left" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "#7E22CE"} onMouseLeave={e => e.currentTarget.style.borderColor = "#E5E7EB"}>
+              <span style={{ fontSize: "24px" }}>📍</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.displayName?.text || p.displayName}</div>
+                <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.formattedAddress}{p.rating ? ` · ⭐ ${p.rating}` : ""}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      <button onClick={() => { setMode(null); setPlaceResults(null); setPlaceSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", alignSelf: "center" }}>← Back</button>
+    </div>
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       {mode === "url" && <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#7E22CE", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Google Maps Link</label><input value={mapsUrl} onChange={e => handleUrlPaste(e.target.value)} placeholder="https://www.google.com/maps/place/..." style={IS} autoFocus /></div>}
@@ -745,13 +803,25 @@ function ContentLinker({ onAdd }) {
 /* ═══════════════════════════════════════════════
    POST
    ═══════════════════════════════════════════════ */
-function Post({ post, onAddReaction, onRemoveReaction, onViewItem }) {
+function Post({ post, onAddReaction, onRemoveReaction, onViewItem, onSave, savedIds }) {
   const [showReactions, setShowReactions] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const isSaved = savedIds?.has(post.id);
+  const handleShare = () => {
+    const url = window.location.origin + window.location.pathname + `#post-${post.id}`;
+    navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
   return (
     <article style={{ background: "white", borderRadius: "24px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.04)", animation: "fadeSlideUp 0.4s ease" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-        <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: post.author.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{post.author.emoji}</div>
-        <div><div style={{ fontFamily: "'DM Sans'", fontWeight: 600, fontSize: "15px", color: "#1a1a1a" }}>{post.author.name}</div><div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF" }}>{post.time}</div></div>
+        <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: post.author?.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{post.author?.emoji}</div>
+        <div style={{ flex: 1 }}><div style={{ fontFamily: "'DM Sans'", fontWeight: 600, fontSize: "15px", color: "#1a1a1a" }}>{post.author?.name}</div><div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF" }}>{post.time}</div></div>
+        <div style={{ display: "flex", gap: "4px" }}>
+          <button onClick={handleShare} title="Copy link" style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", padding: "4px", opacity: 0.5 }}>{copied ? "✅" : "🔗"}</button>
+          {post.author?.name !== CURRENT_USER.name && (
+            <button onClick={() => onSave?.(post)} title={isSaved ? "Saved" : "Save"} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", padding: "4px", opacity: isSaved ? 1 : 0.5 }}>{isSaved ? "🔖" : "📌"}</button>
+          )}
+        </div>
       </div>
       <p style={{ fontFamily: "'DM Sans'", fontSize: "15px", lineHeight: 1.65, color: "#374151", margin: "0 0 18px 0" }}>{post.text}</p>
       {post.media && <div style={{ marginBottom: "18px", cursor: "pointer" }} onClick={() => onViewItem(getMediaKey(post.media))}><MediaCard media={post.media} compact /></div>}
@@ -798,28 +868,40 @@ function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction, onRemoveReacti
 /* ═══════════════════════════════════════════════
    COMPOSE MODAL
    ═══════════════════════════════════════════════ */
-function ComposeModal({ onClose, onPublish }) {
+function ComposeModal({ onClose, onPublish, dailyCount }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState(null);
-  const canPublish = text.trim() && countWords(text) <= MAX_WORDS && media;
+  const canPublish = text.trim() && countWords(text) <= MAX_WORDS && media && dailyCount < 5;
+  const atLimit = dailyCount >= 5;
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, animation: "fadeIn 0.2s ease" }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: "28px", padding: "32px", width: "92%", maxWidth: "560px", boxShadow: "0 24px 64px rgba(0,0,0,0.15)", animation: "fadeSlideUp 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <h2 style={{ fontFamily: "'Instrument Serif'", fontSize: "24px", margin: 0 }}>Share something</h2>
-          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", width: "36px", height: "36px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280" }}>×</button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: atLimit ? "#DC2626" : "#9CA3AF", fontWeight: 500 }}>{dailyCount}/5 today</span>
+            <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", width: "36px", height: "36px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280" }}>×</button>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "4px" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: CURRENT_USER.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{CURRENT_USER.emoji}</div>
-          <LimitedTextarea value={text} onChange={setText} placeholder="Share your thoughts..." />
-        </div>
-        {(!text.trim() || !media) && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", marginBottom: "12px", padding: "8px 12px", background: "#F9FAFB", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}><span>💡</span>{!media && !text.trim() ? "Add an item and share your thoughts" : !media ? "Now link an item below" : "Write your thoughts to publish"}</div>}
-        {media && <div style={{ position: "relative", marginBottom: "16px" }}><MediaCard media={media} compact /><button onClick={() => setMedia(null)} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", border: "none", width: "28px", height: "28px", borderRadius: "50%", cursor: "pointer", color: "white", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button></div>}
-        {!media && <div style={{ paddingTop: "16px", borderTop: "1px solid #F3F4F6", marginBottom: "20px" }}><ContentLinker onAdd={m => setMedia(m)} /></div>}
-        <button onClick={() => { if (canPublish) { onPublish(text, media); onClose(); } }} disabled={!canPublish}
-          style={{ width: "100%", background: canPublish ? "#1a1a1a" : "#E5E7EB", border: "none", borderRadius: "14px", padding: "14px", cursor: canPublish ? "pointer" : "default", fontFamily: "'DM Sans'", fontSize: "15px", color: canPublish ? "white" : "#9CA3AF", fontWeight: 600 }}>
-          {canPublish ? "Publish" : countWords(text) > MAX_WORDS ? `Over ${MAX_WORDS} word limit` : "Add item + thoughts to publish"}
-        </button>
+        {atLimit ? (
+          <div style={{ textAlign: "center", padding: "32px 20px", fontFamily: "'DM Sans'" }}>
+            <div style={{ fontSize: "40px", marginBottom: "12px" }}>🚫</div>
+            <div style={{ fontSize: "15px", color: "#DC2626", fontWeight: 600 }}>Daily limit reached</div>
+            <div style={{ fontSize: "13px", color: "#9CA3AF", marginTop: "4px" }}>You can share up to 5 items per day. Come back tomorrow!</div>
+          </div>
+        ) : (<>
+          <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "4px" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: CURRENT_USER.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{CURRENT_USER.emoji}</div>
+            <LimitedTextarea value={text} onChange={setText} placeholder="Share your thoughts..." />
+          </div>
+          {(!text.trim() || !media) && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", marginBottom: "12px", padding: "8px 12px", background: "#F9FAFB", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}><span>💡</span>{!media && !text.trim() ? "Add an item and share your thoughts" : !media ? "Now link an item below" : "Write your thoughts to publish"}</div>}
+          {media && <div style={{ position: "relative", marginBottom: "16px" }}><MediaCard media={media} compact /><button onClick={() => setMedia(null)} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", border: "none", width: "28px", height: "28px", borderRadius: "50%", cursor: "pointer", color: "white", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button></div>}
+          {!media && <div style={{ paddingTop: "16px", borderTop: "1px solid #F3F4F6", marginBottom: "20px" }}><ContentLinker onAdd={m => setMedia(m)} /></div>}
+          <button onClick={() => { if (canPublish) { onPublish(text, media); onClose(); } }} disabled={!canPublish}
+            style={{ width: "100%", background: canPublish ? "#1a1a1a" : "#E5E7EB", border: "none", borderRadius: "14px", padding: "14px", cursor: canPublish ? "pointer" : "default", fontFamily: "'DM Sans'", fontSize: "15px", color: canPublish ? "white" : "#9CA3AF", fontWeight: 600 }}>
+            {canPublish ? "Publish" : countWords(text) > MAX_WORDS ? `Over ${MAX_WORDS} word limit` : "Add item + thoughts to publish"}
+          </button>
+        </>)}
       </div>
     </div>
   );
@@ -856,29 +938,22 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange }) {
 /* ═══════════════════════════════════════════════
    GROUP SELECTOR
    ═══════════════════════════════════════════════ */
-function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembers, clubData, excludedUsers, onExcludeUser }) {
+function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembers, clubData, excludedUsers, onExcludeUser, onRefreshRandom, onSelectClubItem }) {
+  const t = useT();
   const groups = [
-    { key: "random", icon: "🎲", label: "Random Circle", desc: `${randomMembers.length} members`, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
-    { key: "similar", icon: "🔗", label: "Shared Taste", desc: `${similarMembers.length} matches`, color: "#8B5CF6", bg: "#FDF4FF", border: "#E9D5FF" },
-    { key: "club", icon: "📖", label: "Club", desc: "Read together", color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
+    { key: "random", icon: "🎲", label: t.randomCircle, desc: `${randomMembers.length} ${t.members}`, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
+    { key: "similar", icon: "🔗", label: t.sharedTaste, desc: `${similarMembers.length} ${t.matches}`, color: "#8B5CF6", bg: "#FDF4FF", border: "#E9D5FF" },
+    { key: "club", icon: "📖", label: t.club, desc: t.readTogether, color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
   ];
   const [showMembers, setShowMembers] = useState(false);
-
   const currentMembers = activeGroup === "random" ? randomMembers : activeGroup === "similar" ? similarMembers : clubData.members;
-  const clubItemMedia = activeGroup === "club" && clubData.recommendedKey ? true : false;
 
   return (
     <div style={{ marginBottom: "16px" }}>
-      {/* Group tabs */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
         {groups.map(g => (
           <button key={g.key} onClick={() => onGroupChange(g.key)}
-            style={{
-              flex: 1, padding: "12px 10px", borderRadius: "14px", cursor: "pointer",
-              background: activeGroup === g.key ? g.bg : "white",
-              border: `2px solid ${activeGroup === g.key ? g.color : "#E5E7EB"}`,
-              transition: "all 0.2s", textAlign: "center",
-            }}>
+            style={{ flex: 1, padding: "12px 10px", borderRadius: "14px", cursor: "pointer", background: activeGroup === g.key ? g.bg : "white", border: `2px solid ${activeGroup === g.key ? g.color : "#E5E7EB"}`, transition: "all 0.2s", textAlign: "center" }}>
             <div style={{ fontSize: "20px", marginBottom: "4px" }}>{g.icon}</div>
             <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", fontWeight: 600, color: activeGroup === g.key ? g.color : "#374151" }}>{g.label}</div>
             <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", color: "#9CA3AF" }}>{g.desc}</div>
@@ -886,29 +961,25 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
         ))}
       </div>
 
-      {/* Group info bar */}
       <div style={{ background: "white", borderRadius: "14px", padding: "12px 16px", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ display: "flex" }}>
             {currentMembers.slice(0, 5).map((m, i) => (
-              <div key={m.name} style={{
-                width: "28px", height: "28px", borderRadius: "50%", background: m.color,
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px",
-                border: "2px solid white", marginLeft: i > 0 ? "-8px" : 0, zIndex: 5 - i,
-              }}>{m.emoji}</div>
+              <div key={m.name} style={{ width: "28px", height: "28px", borderRadius: "50%", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "2px solid white", marginLeft: i > 0 ? "-8px" : 0, zIndex: 5 - i }}>{m.emoji}</div>
             ))}
           </div>
           <span style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280" }}>
             {currentMembers.map(m => m.name).join(", ") || "No members yet"}
           </span>
         </div>
-        <button onClick={() => setShowMembers(!showMembers)} style={{
-          background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px",
-          cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280",
-        }}>{showMembers ? "Hide" : "Manage"}</button>
+        <div style={{ display: "flex", gap: "4px" }}>
+          {(activeGroup === "random" || activeGroup === "similar") && (
+            <button onClick={onRefreshRandom} style={{ background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }} title="Refresh">🔄</button>
+          )}
+          <button onClick={() => setShowMembers(!showMembers)} style={{ background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }}>{showMembers ? t.hide : t.manage}</button>
+        </div>
       </div>
 
-      {/* Expanded member list */}
       {showMembers && (
         <div style={{ background: "white", borderRadius: "14px", padding: "12px", border: "1px solid #E5E7EB", marginTop: "8px" }}>
           {activeGroup === "similar" && (
@@ -916,14 +987,23 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
               People who shared the same items as you. Exclude anyone you don't want to see.
             </div>
           )}
-          {activeGroup === "club" && clubData.recommendedKey && (
-            <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#059669", marginBottom: "8px", padding: "8px 12px", background: "#ECFDF5", borderRadius: "10px" }}>
-              📖 Club recommendation: read/watch the same item and share your thoughts!
+          {activeGroup === "club" && clubData.picks?.length > 0 && (
+            <div style={{ marginBottom: "10px" }}>
+              <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#059669", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>📖 This Week's Picks — choose one:</div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {clubData.picks.map(pick => (
+                  <button key={pick.id} onClick={() => onSelectClubItem?.(pick.mediaKey)}
+                    style={{ background: clubData.recommendedKey === pick.mediaKey ? "#ECFDF5" : "white", border: `1px solid ${clubData.recommendedKey === pick.mediaKey ? "#059669" : "#E5E7EB"}`, borderRadius: "10px", padding: "8px 12px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "12px", color: "#374151", textAlign: "left" }}>
+                    <div style={{ fontWeight: 600 }}>{pick.media?.title || pick.mediaKey}</div>
+                    <div style={{ fontSize: "10px", color: "#9CA3AF" }}>{pick.mediaType}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {currentMembers.length === 0 && (
             <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", color: "#9CA3AF", textAlign: "center", padding: "16px" }}>
-              {activeGroup === "similar" ? "Share more items to find people with similar taste!" : "No members in this group"}
+              {activeGroup === "similar" ? t.shareMore : activeGroup === "club" ? "Choose a pick above to see members" : "No members in this group"}
             </div>
           )}
           {currentMembers.map(m => (
@@ -931,23 +1011,16 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
               <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>{m.emoji}</div>
               <span style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 500, color: "#1a1a1a", flex: 1 }}>{m.name}</span>
               {activeGroup === "similar" && (
-                <button onClick={() => onExcludeUser(m.name)} style={{
-                  background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px",
-                  padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#DC2626",
-                }}>Exclude</button>
+                <button onClick={() => onExcludeUser(m.name)} style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#DC2626" }}>{t.exclude}</button>
               )}
             </div>
           ))}
           {activeGroup === "similar" && excludedUsers.length > 0 && (
             <div style={{ marginTop: "8px" }}>
-              <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginBottom: "4px" }}>Excluded:</div>
+              <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginBottom: "4px" }}>{t.excluded}:</div>
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                 {excludedUsers.map(name => (
-                  <button key={name} onClick={() => onExcludeUser(name)} style={{
-                    background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px",
-                    cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280",
-                    textDecoration: "line-through",
-                  }}>{name} ✕</button>
+                  <button key={name} onClick={() => onExcludeUser(name)} style={{ background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280", textDecoration: "line-through" }}>{name} ✕</button>
                 ))}
               </div>
             </div>
@@ -989,20 +1062,6 @@ async function fetchPosts() {
   } catch (err) { console.error("fetchPosts error:", err); return []; }
 }
 
-async function apiCreatePost(author, text, media) {
-  const res = await fetch(`${WORKER_URL}/posts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify({ author, text, media }),
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    console.error("apiCreatePost failed:", res.status, errText);
-    throw new Error("Failed to create post: " + errText);
-  }
-  return res.json();
-}
-
 async function apiAddReaction(postId, emoji, userName) {
   try {
     await fetch(`${WORKER_URL}/posts/${postId}/reactions`, {
@@ -1011,6 +1070,70 @@ async function apiAddReaction(postId, emoji, userName) {
       body: JSON.stringify({ emoji, userName }),
     });
   } catch {}
+}
+
+async function apiCreatePost(author, text, media, mediaKey) {
+  const res = await fetch(`${WORKER_URL}/posts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ author, text, media, mediaKey }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.error("apiCreatePost failed:", res.status, errText);
+    throw new Error(errText || "Failed to create post");
+  }
+  return res.json();
+}
+
+async function apiGetDailyCount(userName) {
+  try {
+    const res = await fetch(`${WORKER_URL}/posts/count?user=${encodeURIComponent(userName)}`);
+    if (res.ok) return (await res.json()).count || 0;
+  } catch {}
+  return 0;
+}
+
+async function apiSavePost(userName, postId, mediaType, mediaData) {
+  const res = await fetch(`${WORKER_URL}/saves`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userName, postId, mediaType, mediaData }),
+  });
+  if (!res.ok) throw new Error("Save failed");
+  return res.json();
+}
+
+async function apiGetSaves(userName) {
+  try {
+    const res = await fetch(`${WORKER_URL}/saves?user=${encodeURIComponent(userName)}`);
+    if (res.ok) return res.json();
+  } catch {}
+  return [];
+}
+
+async function apiDeleteSave(saveId) {
+  await fetch(`${WORKER_URL}/saves/${saveId}`, { method: "DELETE" });
+}
+
+async function apiGetClubPicks() {
+  try {
+    const res = await fetch(`${WORKER_URL}/club/picks`);
+    if (res.ok) return res.json();
+  } catch {}
+  return [];
+}
+
+async function apiSearchPlaces(query) {
+  const res = await fetch(`${WORKER_URL}/places/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error("Places search failed");
+  return res.json();
+}
+
+async function apiAutocompletePlaces(query) {
+  const res = await fetch(`${WORKER_URL}/places/autocomplete?q=${encodeURIComponent(query)}`);
+  if (!res.ok) return { suggestions: [] };
+  return res.json();
 }
 
 /* ═══════════════════════════════════════════════
@@ -1027,6 +1150,9 @@ export default function App() {
   const [activeGroup, setActiveGroup] = useState("random");
   const [excludedUsers, setExcludedUsers] = useState([]);
   const [clubItem, setClubItem] = useState(null);
+  const [clubPicks, setClubPicks] = useState([]);
+  const [savedIds, setSavedIds] = useState(new Set());
+  const [dailyCount, setDailyCount] = useState(0);
   const [lang, setLang] = useState("en");
   const [bgKey, setBgKey] = useState("warm");
   const [showSettings, setShowSettings] = useState(false);
@@ -1034,7 +1160,7 @@ export default function App() {
   const bgTheme = BG_COLORS.find(b => b.key === bgKey) || BG_COLORS[0];
   const isDark = bgKey === "dark";
 
-  // Load posts from API on mount + auto-refresh every 30s
+  // Load posts from API on mount + auto-refresh every 5min
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -1042,8 +1168,15 @@ export default function App() {
       if (active) { setPosts(data); setLoading(false); }
     };
     load();
-    const interval = setInterval(load, 300000); // 5분마다 새 포스트 확인
+    const interval = setInterval(load, 300000);
     return () => { active = false; clearInterval(interval); };
+  }, []);
+
+  // Load saves and daily count and club picks on mount
+  useEffect(() => {
+    apiGetSaves(CURRENT_USER.name).then(saves => setSavedIds(new Set(saves.map(s => s.postId))));
+    apiGetDailyCount(CURRENT_USER.name).then(c => setDailyCount(c));
+    apiGetClubPicks().then(picks => setClubPicks(picks));
   }, []);
 
   const addReaction = useCallback((postId, emoji) => {
@@ -1060,33 +1193,46 @@ export default function App() {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
   }, []);
   const publishPost = useCallback(async (text, media) => {
+    if (dailyCount >= 5) return;
     const tempId = "temp-" + Date.now();
+    const mediaKey = getMediaKey(media);
     setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
     try {
-      const result = await apiCreatePost(CURRENT_USER, text, media);
+      const result = await apiCreatePost(CURRENT_USER, text, media, mediaKey);
       setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
+      setDailyCount(c => c + 1);
     } catch (err) {
       console.error("publishPost error:", err);
+      if (err.message?.includes("Daily limit")) setDailyCount(5);
     }
-  }, []);
+  }, [dailyCount]);
+
+  const savePost = useCallback(async (post) => {
+    if (savedIds.has(post.id)) return;
+    try {
+      await apiSavePost(CURRENT_USER.name, post.id, post.media?.type, post.media);
+      setSavedIds(prev => new Set([...prev, post.id]));
+    } catch (err) { console.error("savePost error:", err); }
+  }, [savedIds]);
 
   // ── Group membership logic ──
+  const [randomSeed, setRandomSeed] = useState(0);
   const randomGroupMembers = useMemo(() => {
     const allUsers = AVATARS.filter(a => a.name !== CURRENT_USER.name);
     const shuffled = [...allUsers].sort((a, b) => {
-      const ha = a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1);
-      const hb = b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1);
+      const ha = (a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1) + randomSeed) % 100;
+      const hb = (b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1) + randomSeed) % 100;
       return ha - hb;
     });
-    return shuffled.slice(0, 3);
-  }, []);
+    return shuffled.slice(0, 4);
+  }, [randomSeed]);
 
   // Similar group: people who share the same items as you
   const similarGroupMembers = useMemo(() => {
-    const myMediaKeys = new Set(posts.filter(p => p.author.name === CURRENT_USER.name).map(p => getMediaKey(p.media)).filter(Boolean));
+    const myMediaKeys = new Set(posts.filter(p => p.author?.name === CURRENT_USER.name).map(p => getMediaKey(p.media)).filter(Boolean));
     const userOverlap = {};
     posts.forEach(p => {
-      if (p.author.name === CURRENT_USER.name) return;
+      if (p.author?.name === CURRENT_USER.name) return;
       const key = getMediaKey(p.media);
       if (key && myMediaKeys.has(key)) {
         userOverlap[p.author.name] = (userOverlap[p.author.name] || 0) + 1;
@@ -1096,16 +1242,25 @@ export default function App() {
       .sort((a, b) => (userOverlap[b.name] || 0) - (userOverlap[a.name] || 0));
   }, [posts, excludedUsers]);
 
-  // Club: random pairing with a specific item recommendation
+  // Club: weekly picks from API + users who posted about picked items
   const clubData = useMemo(() => {
-    // Pick a random item that multiple people posted about
-    const keyCount = {};
-    posts.forEach(p => { const k = getMediaKey(p.media); if (k) keyCount[k] = (keyCount[k] || 0) + 1; });
-    const popular = Object.entries(keyCount).filter(([, c]) => c >= 1).sort((a, b) => b[1] - a[1]);
-    const recommendedKey = clubItem || (popular[0]?.[0] || null);
-    const members = AVATARS.filter(a => a.name !== CURRENT_USER.name).slice(0, 4);
-    return { recommendedKey, members };
-  }, [posts, clubItem]);
+    const selectedKey = clubItem || (clubPicks[0]?.mediaKey || null);
+    // Find users who posted about the selected club item
+    const clubMembers = [];
+    if (selectedKey) {
+      const memberNames = new Set();
+      posts.forEach(p => {
+        if (getMediaKey(p.media) === selectedKey && p.author?.name !== CURRENT_USER.name) {
+          memberNames.add(p.author.name);
+        }
+      });
+      memberNames.forEach(name => {
+        const avatar = AVATARS.find(a => a.name === name);
+        if (avatar) clubMembers.push(avatar);
+      });
+    }
+    return { recommendedKey: selectedKey, members: clubMembers, picks: clubPicks };
+  }, [posts, clubItem, clubPicks]);
 
   const filteredPosts = useMemo(() => {
     let result = posts;
@@ -1218,6 +1373,8 @@ export default function App() {
                   randomMembers={randomGroupMembers} similarMembers={similarGroupMembers}
                   clubData={clubData} excludedUsers={excludedUsers}
                   onExcludeUser={name => setExcludedUsers(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])}
+                  onRefreshRandom={() => setRandomSeed(s => s + 1)}
+                  onSelectClubItem={key => setClubItem(key)}
                 />
               )}
               {page === "search" && searchQuery && filteredPosts.length === 0 && (
@@ -1235,7 +1392,7 @@ export default function App() {
                   </div>
                 )}
                 {!loading && filteredPosts.map(post => (
-                  <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} />
+                  <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} onSave={savePost} savedIds={savedIds} />
                 ))}
                 {!loading && page === "feed" && filteredPosts.length === 0 && (
                   <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
@@ -1249,7 +1406,7 @@ export default function App() {
           )}
         </main>
       </div>
-      {composing && <ComposeModal onClose={() => setComposing(false)} onPublish={publishPost} />}
+      {composing && <ComposeModal onClose={() => setComposing(false)} onPublish={publishPost} dailyCount={dailyCount} />}
     </LangContext.Provider>
   );
 }
