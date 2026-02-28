@@ -32,6 +32,7 @@ const BG_COLORS = [
 // ── i18n ──
 const LANG = {
   en: {
+<<<<<<< HEAD
     commune: "commune",
     tagline: "share what moves you",
     discover: "Discover",
@@ -118,10 +119,167 @@ const LANG = {
     settings: "설정",
     language: "언어",
     background: "배경",
+=======
+    commune: "commune", tagline: "share what moves you",
+    discover: "Discover", share: "Share", publish: "Publish", feed: "Feed", search: "Search",
+    randomCircle: "Random Circle", sharedTaste: "Shared Taste", club: "Club",
+    members: "members", matches: "matches", readTogether: "Read together",
+    manage: "Manage", hide: "Hide", exclude: "Exclude", excluded: "Excluded", refresh: "Refresh",
+    noPostsGroup: "No posts in this group yet",
+    shareMore: "Share more items to find people with similar taste!",
+    beFirst: "Be the first to share something!",
+    noResults: "No results for", tryDifferent: "Try a different search or filter",
+    loading: "Loading posts...", backToFeed: "← Back to feed",
+    thoughts: "thoughts", react: "React", viewAll: "View all thoughts →",
+    whatSharing: "What are you sharing?", pasteUrl: "Paste any URL to auto-detect",
+    orChoose: "— or choose a type —", overLimit: "Over word limit",
+    addItemToPublish: "Add item + thoughts to publish",
+    all: "All", books: "Books", music: "Music", movies: "Movies",
+    places: "Places", podcasts: "Podcasts", articles: "Articles",
+    settings: "Settings", language: "Language", background: "Background", profile: "Profile",
+    saved: "Saved", noSaved: "No saved items yet. Tap 📌 on any post to save it.",
+    dailyLimit: "Daily limit reached", dailyLimitDesc: "You can share up to 5 items per day. Come back tomorrow!",
+    today: "today", shareSomething: "Share something",
+    clubPicks: "This Week's Picks", chooseOne: "Choose one to join:",
+    clubJoined: "members who chose this",
+    noMembers: "No members yet", searchPlaces: "Search places",
+    pasteLink: "Paste Google Maps link", enterManually: "Enter manually",
+    similarDesc: "People who shared the same items as you.",
+    addThoughts: "Add an item and share your thoughts",
+    linkItem: "Now link an item below", writeThoughts: "Write your thoughts to publish",
+  },
+  ko: {
+    commune: "commune", tagline: "감동을 나누다",
+    discover: "탐색", share: "공유", publish: "게시", feed: "피드", search: "검색",
+    randomCircle: "랜덤 서클", sharedTaste: "취향 공유", club: "클럽",
+    members: "명", matches: "매칭", readTogether: "함께 읽기",
+    manage: "관리", hide: "숨기기", exclude: "제외", excluded: "제외됨", refresh: "새로고침",
+    noPostsGroup: "이 그룹에 아직 글이 없어요",
+    shareMore: "더 많이 공유해서 취향이 비슷한 사람을 찾아보세요!",
+    beFirst: "첫 번째로 공유해보세요!",
+    noResults: "검색 결과 없음:", tryDifferent: "다른 검색어나 필터를 시도해보세요",
+    loading: "로딩 중...", backToFeed: "← 피드로 돌아가기",
+    thoughts: "개의 생각", react: "반응", viewAll: "모든 생각 보기 →",
+    whatSharing: "무엇을 공유할까요?", pasteUrl: "URL을 붙여넣으면 자동 감지",
+    orChoose: "— 또는 유형 선택 —", overLimit: "글자 수 초과",
+    addItemToPublish: "아이템 + 생각을 추가해주세요",
+    all: "전체", books: "책", music: "음악", movies: "영화",
+    places: "장소", podcasts: "팟캐스트", articles: "아티클",
+    settings: "설정", language: "언어", background: "배경", profile: "프로필",
+    saved: "저장됨", noSaved: "저장한 항목이 없어요. 📌 버튼을 눌러 저장하세요.",
+    dailyLimit: "일일 제한 도달", dailyLimitDesc: "하루에 최대 5개까지 공유할 수 있어요. 내일 다시 와주세요!",
+    today: "오늘", shareSomething: "공유하기",
+    clubPicks: "이번 주 추천", chooseOne: "하나를 골라 참여하세요:",
+    clubJoined: "명이 선택함",
+    noMembers: "아직 멤버가 없어요", searchPlaces: "장소 검색",
+    pasteLink: "구글 맵 링크 붙여넣기", enterManually: "직접 입력",
+    similarDesc: "같은 아이템을 공유한 사람들입니다.",
+    addThoughts: "아이템을 추가하고 생각을 공유하세요",
+    linkItem: "아래에서 아이템을 연결하세요", writeThoughts: "생각을 적어주세요",
+  },
+  ja: {
+    commune: "commune", tagline: "感動を分かち合う",
+    discover: "探索", share: "共有", publish: "投稿", feed: "フィード", search: "検索",
+    randomCircle: "ランダム", sharedTaste: "趣味が合う人", club: "クラブ",
+    members: "人", matches: "マッチ", readTogether: "一緒に読む",
+    manage: "管理", hide: "隠す", exclude: "除外", excluded: "除外済み", refresh: "更新",
+    noPostsGroup: "このグループにはまだ投稿がありません",
+    shareMore: "もっと共有して趣味が合う人を見つけましょう！",
+    beFirst: "最初に何かを共有しましょう！",
+    noResults: "検索結果なし:", tryDifferent: "別の検索語を試してください",
+    loading: "読み込み中...", backToFeed: "← フィードに戻る",
+    thoughts: "件の感想", react: "リアクション", viewAll: "すべての感想を見る →",
+    whatSharing: "何を共有しますか？", pasteUrl: "URLを貼り付けて自動検出",
+    orChoose: "— または種類を選択 —", overLimit: "文字数超過",
+    addItemToPublish: "アイテム＋感想を追加して投稿",
+    all: "すべて", books: "本", music: "音楽", movies: "映画",
+    places: "場所", podcasts: "ポッドキャスト", articles: "記事",
+    settings: "設定", language: "言語", background: "背景", profile: "プロフィール",
+    saved: "保存済み", noSaved: "まだ保存したアイテムがありません。📌ボタンで保存できます。",
+    dailyLimit: "1日の上限に達しました", dailyLimitDesc: "1日最大5件まで共有できます。明日また来てね！",
+    today: "今日", shareSomething: "共有する",
+    clubPicks: "今週のおすすめ", chooseOne: "一つ選んで参加:",
+    clubJoined: "人が選択済み",
+    noMembers: "まだメンバーがいません", searchPlaces: "場所を検索",
+    pasteLink: "Googleマップのリンクを貼る", enterManually: "手動入力",
+    similarDesc: "同じアイテムを共有した人たちです。",
+    addThoughts: "アイテムと感想を追加してください",
+    linkItem: "下からアイテムをリンクしてください", writeThoughts: "感想を書いてください",
+  },
+  zh: {
+    commune: "commune", tagline: "分享感动",
+    discover: "发现", share: "分享", publish: "发布", feed: "动态", search: "搜索",
+    randomCircle: "随机圈子", sharedTaste: "共同品味", club: "俱乐部",
+    members: "人", matches: "匹配", readTogether: "一起读",
+    manage: "管理", hide: "隐藏", exclude: "排除", excluded: "已排除", refresh: "刷新",
+    noPostsGroup: "这个群组还没有帖子",
+    shareMore: "多分享来找到品味相似的人吧！",
+    beFirst: "来做第一个分享的人吧！",
+    noResults: "没有搜索结果:", tryDifferent: "试试不同的搜索词",
+    loading: "加载中...", backToFeed: "← 返回动态",
+    thoughts: "条想法", react: "反应", viewAll: "查看所有想法 →",
+    whatSharing: "你想分享什么？", pasteUrl: "粘贴URL自动识别",
+    orChoose: "— 或选择类型 —", overLimit: "超出字数限制",
+    addItemToPublish: "添加内容+想法后发布",
+    all: "全部", books: "书", music: "音乐", movies: "电影",
+    places: "地点", podcasts: "播客", articles: "文章",
+    settings: "设置", language: "语言", background: "背景", profile: "个人资料",
+    saved: "已保存", noSaved: "还没有保存的内容。点击📌按钮保存。",
+    dailyLimit: "已达每日上限", dailyLimitDesc: "每天最多分享5条。明天再来吧！",
+    today: "今天", shareSomething: "分享内容",
+    clubPicks: "本周推荐", chooseOne: "选一个加入:",
+    clubJoined: "人已选择",
+    noMembers: "还没有成员", searchPlaces: "搜索地点",
+    pasteLink: "粘贴谷歌地图链接", enterManually: "手动输入",
+    similarDesc: "分享过相同内容的人。",
+    addThoughts: "添加内容并分享你的想法",
+    linkItem: "在下方链接一个内容", writeThoughts: "写下你的想法",
+  },
+  es: {
+    commune: "commune", tagline: "comparte lo que te inspira",
+    discover: "Descubrir", share: "Compartir", publish: "Publicar", feed: "Inicio", search: "Buscar",
+    randomCircle: "Círculo Aleatorio", sharedTaste: "Gustos Afines", club: "Club",
+    members: "miembros", matches: "coincidencias", readTogether: "Leer juntos",
+    manage: "Gestionar", hide: "Ocultar", exclude: "Excluir", excluded: "Excluidos", refresh: "Actualizar",
+    noPostsGroup: "Aún no hay publicaciones en este grupo",
+    shareMore: "¡Comparte más para encontrar personas con gustos similares!",
+    beFirst: "¡Sé el primero en compartir algo!",
+    noResults: "Sin resultados para", tryDifferent: "Prueba con otra búsqueda",
+    loading: "Cargando...", backToFeed: "← Volver al inicio",
+    thoughts: "pensamientos", react: "Reaccionar", viewAll: "Ver todos los pensamientos →",
+    whatSharing: "¿Qué vas a compartir?", pasteUrl: "Pega un URL para detectar automáticamente",
+    orChoose: "— o elige un tipo —", overLimit: "Excede el límite de palabras",
+    addItemToPublish: "Añade contenido + opinión para publicar",
+    all: "Todo", books: "Libros", music: "Música", movies: "Películas",
+    places: "Lugares", podcasts: "Podcasts", articles: "Artículos",
+    settings: "Ajustes", language: "Idioma", background: "Fondo", profile: "Perfil",
+    saved: "Guardado", noSaved: "No tienes elementos guardados. Pulsa 📌 para guardar.",
+    dailyLimit: "Límite diario alcanzado", dailyLimitDesc: "Puedes compartir hasta 5 por día. ¡Vuelve mañana!",
+    today: "hoy", shareSomething: "Compartir algo",
+    clubPicks: "Selecciones de la semana", chooseOne: "Elige uno para unirte:",
+    clubJoined: "miembros eligieron esto",
+    noMembers: "Aún no hay miembros", searchPlaces: "Buscar lugares",
+    pasteLink: "Pegar enlace de Google Maps", enterManually: "Ingresar manualmente",
+    similarDesc: "Personas que compartieron los mismos contenidos.",
+    addThoughts: "Añade un contenido y comparte tu opinión",
+    linkItem: "Enlaza un contenido abajo", writeThoughts: "Escribe tu opinión",
+>>>>>>> 9d96e2c (Update)
   },
 };
 const LangContext = createContext("en");
 function useT() { const lang = useContext(LangContext); return LANG[lang] || LANG.en; }
+<<<<<<< HEAD
+=======
+
+// ── Random nickname generator (3-keyword combo) ──
+const _adj = ["Cosmic","Velvet","Neon","Quiet","Wild","Misty","Golden","Copper","Silver","Swift","Gentle","Lunar","Solar","Rustic","Vivid","Crisp","Dreamy","Hazy","Bold","Soft"];
+const _noun = ["Fox","Whale","Cloud","Wave","Maple","Robin","Panda","Comet","River","Bloom","Echo","Pixel","Fern","Drift","Atlas","Spark","Haze","Sage","Reef","Peak"];
+const _tail = ["42","77","99","X","Z","01","13","88","Go","Up","In","On","XO","AI","21","55","33","7","0","11"];
+function generateNickname() {
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  return pick(_adj) + pick(_noun) + pick(_tail);
+}
+>>>>>>> 9d96e2c (Update)
 
 const CUISINE_OPTIONS = ["Korean","Japanese","Chinese","Thai","Vietnamese","Indian","Italian","French","Mexican","American","Mediterranean","Café","Bakery","Bar","Brunch","Fine Dining","Street Food","Vegan","Seafood","BBQ","Pizza","Ramen","Sushi","Other"];
 
@@ -513,6 +671,10 @@ function PlaceLinker({ onAdd }) {
   const [placeSearch, setPlaceSearch] = useState("");
   const [placeResults, setPlaceResults] = useState(null);
   const [placeLoading, setPlaceLoading] = useState(false);
+<<<<<<< HEAD
+=======
+  const [placeError, setPlaceError] = useState("");
+>>>>>>> 9d96e2c (Update)
   const db = useRef(null);
   const handleUrlPaste = v => { setMapsUrl(v); if (isGoogleMapsUrl(v)) { const p = parseGoogleMapsUrl(v); if (p.name) setName(p.name); } };
   useEffect(() => {
@@ -526,10 +688,22 @@ function PlaceLinker({ onAdd }) {
   const handlePlaceSearch = async () => {
     if (!placeSearch.trim()) return;
     setPlaceLoading(true);
+<<<<<<< HEAD
     try {
       const data = await apiSearchPlaces(placeSearch);
       setPlaceResults(data.places || []);
     } catch { setPlaceResults([]); }
+=======
+    setPlaceError("");
+    try {
+      const data = await apiSearchPlaces(placeSearch);
+      setPlaceResults(data.places || []);
+    } catch (e) {
+      console.error("Place search error:", e);
+      setPlaceError(e.message || "Search failed");
+      setPlaceResults([]);
+    }
+>>>>>>> 9d96e2c (Update)
     setPlaceLoading(false);
   };
 
@@ -569,7 +743,12 @@ function PlaceLinker({ onAdd }) {
         <input value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handlePlaceSearch()} placeholder="e.g. Korean BBQ Chicago, Blue Bottle Tokyo..." style={IS} autoFocus />
         <button onClick={handlePlaceSearch} disabled={placeLoading} style={{ background: "#7E22CE", border: "none", borderRadius: "10px", padding: "10px 18px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 500, whiteSpace: "nowrap" }}>{placeLoading ? "..." : "Search"}</button>
       </div>
+<<<<<<< HEAD
       {placeResults && placeResults.length === 0 && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", textAlign: "center", padding: "12px" }}>No results found</div>}
+=======
+      {placeError && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#DC2626", padding: "8px 12px", background: "#FEF2F2", borderRadius: "10px" }}>⚠️ {placeError}</div>}
+      {placeResults && placeResults.length === 0 && !placeError && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", textAlign: "center", padding: "12px" }}>No results found</div>}
+>>>>>>> 9d96e2c (Update)
       {placeResults && placeResults.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "300px", overflowY: "auto" }}>
           {placeResults.slice(0, 6).map((p, i) => (
@@ -967,18 +1146,30 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange, savedIt
 function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembers, clubData, excludedUsers, onExcludeUser, onRefreshRandom, onSelectClubItem }) {
   const t = useT();
   const groups = [
+<<<<<<< HEAD
     { key: "random", icon: "🎲", label: t.randomCircle, desc: `${randomMembers.length} ${t.members}`, color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
     { key: "similar", icon: "🔗", label: t.sharedTaste, desc: `${similarMembers.length} ${t.matches}`, color: "#8B5CF6", bg: "#FDF4FF", border: "#E9D5FF" },
     { key: "club", icon: "📖", label: t.club, desc: t.readTogether, color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
   ];
   const [showMembers, setShowMembers] = useState(false);
+=======
+    { key: "random", icon: "🎲", label: t.randomCircle, desc: `${randomMembers.length} ${t.members}`, color: "#F59E0B", bg: "#FFFBEB" },
+    { key: "similar", icon: "🔗", label: t.sharedTaste, desc: `${similarMembers.length} ${t.matches}`, color: "#8B5CF6", bg: "#FDF4FF" },
+    { key: "club", icon: "📖", label: t.club, desc: `${clubData.picks?.length || 0} picks`, color: "#059669", bg: "#ECFDF5" },
+  ];
+  const [showPanel, setShowPanel] = useState(false);
+>>>>>>> 9d96e2c (Update)
   const currentMembers = activeGroup === "random" ? randomMembers : activeGroup === "similar" ? similarMembers : clubData.members;
 
   return (
     <div style={{ marginBottom: "16px" }}>
       <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
         {groups.map(g => (
+<<<<<<< HEAD
           <button key={g.key} onClick={() => onGroupChange(g.key)}
+=======
+          <button key={g.key} onClick={() => { onGroupChange(g.key); setShowPanel(true); }}
+>>>>>>> 9d96e2c (Update)
             style={{ flex: 1, padding: "12px 10px", borderRadius: "14px", cursor: "pointer", background: activeGroup === g.key ? g.bg : "white", border: `2px solid ${activeGroup === g.key ? g.color : "#E5E7EB"}`, transition: "all 0.2s", textAlign: "center" }}>
             <div style={{ fontSize: "20px", marginBottom: "4px" }}>{g.icon}</div>
             <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", fontWeight: 600, color: activeGroup === g.key ? g.color : "#374151" }}>{g.label}</div>
@@ -987,6 +1178,7 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
         ))}
       </div>
 
+<<<<<<< HEAD
       <div style={{ background: "white", borderRadius: "14px", padding: "12px 16px", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ display: "flex" }}>
@@ -1008,11 +1200,42 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
 
       {showMembers && (
         <div style={{ background: "white", borderRadius: "14px", padding: "12px", border: "1px solid #E5E7EB", marginTop: "8px" }}>
+=======
+      {/* Member bar — always visible */}
+      <div style={{ background: "white", borderRadius: "14px", padding: "12px 16px", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: 1 }}>
+          {currentMembers.length > 0 ? (
+            <>
+              <div style={{ display: "flex", flexShrink: 0 }}>
+                {currentMembers.slice(0, 5).map((m, i) => (
+                  <div key={m.name} style={{ width: "28px", height: "28px", borderRadius: "50%", background: m.color || "#9CA3AF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "2px solid white", marginLeft: i > 0 ? "-8px" : 0, zIndex: 5 - i }}>{m.emoji || "👤"}</div>
+                ))}
+              </div>
+              <span style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {currentMembers.slice(0, 3).map(m => m.name).join(", ")}{currentMembers.length > 3 ? ` +${currentMembers.length - 3}` : ""}
+              </span>
+            </>
+          ) : (
+            <span style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF" }}>{t.noMembers}</span>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+          <button onClick={onRefreshRandom} style={{ background: "#F3F4F6", border: "none", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#6B7280" }}>🔄</button>
+          <button onClick={() => setShowPanel(!showPanel)} style={{ background: showPanel ? "#1a1a1a" : "#F3F4F6", color: showPanel ? "white" : "#6B7280", border: "none", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px" }}>{showPanel ? t.hide : t.manage}</button>
+        </div>
+      </div>
+
+      {/* Expanded panel */}
+      {showPanel && (
+        <div style={{ background: "white", borderRadius: "14px", padding: "14px", border: "1px solid #E5E7EB", marginTop: "8px", animation: "fadeSlideUp 0.2s ease" }}>
+          {/* Shared Taste description */}
+>>>>>>> 9d96e2c (Update)
           {activeGroup === "similar" && (
-            <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginBottom: "8px" }}>
-              People who shared the same items as you. Exclude anyone you don't want to see.
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#8B5CF6", marginBottom: "10px", padding: "8px 12px", background: "#FDF4FF", borderRadius: "10px" }}>
+              🔗 {t.similarDesc}
             </div>
           )}
+<<<<<<< HEAD
           {activeGroup === "club" && clubData.picks?.length > 0 && (
             <div style={{ marginBottom: "10px" }}>
               <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#059669", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>📖 This Week's Picks — choose one:</div>
@@ -1038,11 +1261,62 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
               <span style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 500, color: "#1a1a1a", flex: 1 }}>{m.name}</span>
               {activeGroup === "similar" && (
                 <button onClick={() => onExcludeUser(m.name)} style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#DC2626" }}>{t.exclude}</button>
+=======
+
+          {/* Club picks */}
+          {activeGroup === "club" && (
+            <div style={{ marginBottom: "10px" }}>
+              <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#059669", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>📖 {t.clubPicks} — {t.chooseOne}</div>
+              {clubData.picks?.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {clubData.picks.map(pick => (
+                    <button key={pick.id} onClick={() => onSelectClubItem?.(pick.mediaKey)}
+                      style={{ display: "flex", alignItems: "center", gap: "10px", background: clubData.recommendedKey === pick.mediaKey ? "#ECFDF5" : "white", border: `2px solid ${clubData.recommendedKey === pick.mediaKey ? "#059669" : "#E5E7EB"}`, borderRadius: "12px", padding: "10px 14px", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                      <span style={{ fontSize: "20px" }}>
+                        {pick.mediaType === "book" ? "📚" : pick.mediaType === "spotify" ? "🎵" : pick.mediaType === "movie" ? "🎥" : pick.mediaType === "place" ? "📍" : "📄"}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pick.media?.title || pick.mediaKey}</div>
+                        <div style={{ fontFamily: "'DM Sans'", fontSize: "10px", color: "#9CA3AF" }}>{pick.media?.userCount || 0} {t.clubJoined}</div>
+                      </div>
+                      {clubData.recommendedKey === pick.mediaKey && <span style={{ fontSize: "14px" }}>✅</span>}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", textAlign: "center", padding: "12px" }}>{t.beFirst}</div>
+>>>>>>> 9d96e2c (Update)
               )}
             </div>
-          ))}
+          )}
+
+          {/* Member list */}
+          {currentMembers.length === 0 ? (
+            <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", color: "#9CA3AF", textAlign: "center", padding: "16px" }}>
+              {activeGroup === "similar" ? t.shareMore : t.noMembers}
+            </div>
+          ) : (
+            <div>
+              <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>{t.members} ({currentMembers.length})</div>
+              {currentMembers.map(m => (
+                <div key={m.name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 4px", borderBottom: "1px solid #F3F4F6" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: m.color || "#9CA3AF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>{m.emoji || "👤"}</div>
+                  <span style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 500, color: "#1a1a1a", flex: 1 }}>{m.name}</span>
+                  {activeGroup === "similar" && (
+                    <button onClick={() => onExcludeUser(m.name)} style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "11px", color: "#DC2626" }}>{t.exclude}</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Excluded users (Shared Taste) */}
           {activeGroup === "similar" && excludedUsers.length > 0 && (
+<<<<<<< HEAD
             <div style={{ marginTop: "8px" }}>
+=======
+            <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #F3F4F6" }}>
+>>>>>>> 9d96e2c (Update)
               <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginBottom: "4px" }}>{t.excluded}:</div>
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                 {excludedUsers.map(name => (
@@ -1152,7 +1426,15 @@ async function apiGetClubPicks() {
 
 async function apiSearchPlaces(query) {
   const res = await fetch(`${WORKER_URL}/places/search?q=${encodeURIComponent(query)}`);
+<<<<<<< HEAD
   if (!res.ok) throw new Error("Places search failed");
+=======
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error("Places search failed:", res.status, err);
+    throw new Error(err.detail || err.error || `Places search failed (${res.status})`);
+  }
+>>>>>>> 9d96e2c (Update)
   return res.json();
 }
 
@@ -1183,9 +1465,15 @@ export default function App() {
   const [lang, setLang] = useState("en");
   const [bgKey, setBgKey] = useState("warm");
   const [showSettings, setShowSettings] = useState(false);
+<<<<<<< HEAD
   const [profileName, setProfileName] = useState(CURRENT_USER_DEFAULT.name);
   const [profileEmoji, setProfileEmoji] = useState(CURRENT_USER_DEFAULT.emoji);
   const [profileColor, setProfileColor] = useState(CURRENT_USER_DEFAULT.color);
+=======
+  const [profileName, setProfileName] = useState(() => generateNickname());
+  const [profileEmoji, setProfileEmoji] = useState(() => PROFILE_EMOJIS[Math.floor(Math.random() * PROFILE_EMOJIS.length)]);
+  const [profileColor, setProfileColor] = useState(() => ["#E8453C","#3C7CE8","#8B5CF6","#059669","#F59E0B","#EC4899","#14B8A6","#6366F1","#EA580C","#0EA5E9"][Math.floor(Math.random() * 10)]);
+>>>>>>> 9d96e2c (Update)
   const CURRENT_USER = useMemo(() => ({ name: profileName, emoji: profileEmoji, color: profileColor }), [profileName, profileEmoji, profileColor]);
   const rIdRef = useRef(100);
   const bgTheme = BG_COLORS.find(b => b.key === bgKey) || BG_COLORS[0];
@@ -1237,6 +1525,7 @@ export default function App() {
       if (err.message?.includes("Daily limit")) setDailyCount(5);
     }
   }, [dailyCount]);
+<<<<<<< HEAD
 
   const savePost = useCallback(async (post) => {
     if (savedIds.has(post.id)) return;
@@ -1271,14 +1560,64 @@ export default function App() {
   // Similar group: people who share the same items as you
   const similarGroupMembers = useMemo(() => {
     const myMediaKeys = new Set(posts.filter(p => p.author?.name === CURRENT_USER.name).map(p => getMediaKey(p.media)).filter(Boolean));
+=======
+
+  const savePost = useCallback(async (post) => {
+    if (savedIds.has(post.id)) return;
+    try {
+      const result = await apiSavePost(CURRENT_USER.name, post.id, post.media?.type, post.media);
+      setSavedIds(prev => new Set([...prev, post.id]));
+      setSavedItems(prev => [{ id: result.id, postId: post.id, media: post.media, savedAt: new Date().toISOString() }, ...prev]);
+    } catch (err) { console.error("savePost error:", err); }
+  }, [savedIds, CURRENT_USER.name]);
+
+  const unsaveItem = useCallback(async (saveId) => {
+    try {
+      await apiDeleteSave(saveId);
+      const item = savedItems.find(s => s.id === saveId);
+      if (item) setSavedIds(prev => { const n = new Set(prev); n.delete(item.postId); return n; });
+      setSavedItems(prev => prev.filter(s => s.id !== saveId));
+    } catch (err) { console.error("unsave error:", err); }
+  }, [savedItems]);
+
+  // ── Extract all unique authors from posts (real users from DB) ──
+  const allAuthors = useMemo(() => {
+    const map = {};
+    posts.forEach(p => {
+      if (p.author?.name && p.author.name !== CURRENT_USER.name) {
+        map[p.author.name] = p.author; // { name, emoji, color }
+      }
+    });
+    return Object.values(map);
+  }, [posts, CURRENT_USER.name]);
+
+  // ── Random Circle: random subset of active users ──
+  const [randomSeed, setRandomSeed] = useState(0);
+  const randomGroupMembers = useMemo(() => {
+    if (allAuthors.length === 0) return [];
+    const shuffled = [...allAuthors].sort((a, b) => {
+      const ha = (a.name.charCodeAt(0) * 31 + (a.name.charCodeAt(1) || 0) + randomSeed) % 1000;
+      const hb = (b.name.charCodeAt(0) * 31 + (b.name.charCodeAt(1) || 0) + randomSeed) % 1000;
+      return ha - hb;
+    });
+    return shuffled.slice(0, Math.min(4, shuffled.length));
+  }, [allAuthors, randomSeed]);
+
+  // ── Shared Taste: people who posted the same media as you ──
+  const similarGroupMembers = useMemo(() => {
+    const myMediaKeys = new Set(posts.filter(p => p.author?.name === CURRENT_USER.name).map(p => getMediaKey(p.media)).filter(Boolean));
+    if (myMediaKeys.size === 0) return [];
+>>>>>>> 9d96e2c (Update)
     const userOverlap = {};
     posts.forEach(p => {
       if (p.author?.name === CURRENT_USER.name) return;
       const key = getMediaKey(p.media);
       if (key && myMediaKeys.has(key)) {
-        userOverlap[p.author.name] = (userOverlap[p.author.name] || 0) + 1;
+        if (!userOverlap[p.author.name]) userOverlap[p.author.name] = { author: p.author, count: 0 };
+        userOverlap[p.author.name].count++;
       }
     });
+<<<<<<< HEAD
     return AVATARS.filter(a => a.name !== CURRENT_USER.name && userOverlap[a.name] && !excludedUsers.includes(a.name))
       .sort((a, b) => (userOverlap[b.name] || 0) - (userOverlap[a.name] || 0));
   }, [posts, excludedUsers]);
@@ -1302,6 +1641,47 @@ export default function App() {
     }
     return { recommendedKey: selectedKey, members: clubMembers, picks: clubPicks };
   }, [posts, clubItem, clubPicks]);
+=======
+    return Object.values(userOverlap)
+      .filter(u => !excludedUsers.includes(u.author.name))
+      .sort((a, b) => b.count - a.count)
+      .map(u => u.author);
+  }, [posts, excludedUsers, CURRENT_USER.name]);
+
+  // ── Club: picks from all posted media (client-side fallback when API picks empty) ──
+  const clubLocalPicks = useMemo(() => {
+    if (clubPicks.length > 0) return clubPicks; // use API picks if available
+    // Generate picks from actual posts: pick 3 most-shared unique media items
+    const mediaMap = {};
+    posts.forEach(p => {
+      const key = getMediaKey(p.media);
+      if (!key) return;
+      if (!mediaMap[key]) mediaMap[key] = { mediaKey: key, media: p.media, users: new Set(), id: key };
+      mediaMap[key].users.add(p.author?.name);
+    });
+    return Object.values(mediaMap)
+      .sort((a, b) => b.users.size - a.users.size)
+      .slice(0, 3)
+      .map(m => ({ id: m.id, mediaKey: m.mediaKey, mediaType: m.media.type, media: { title: m.media.title || m.media.name || m.mediaKey, userCount: m.users.size } }));
+  }, [posts, clubPicks]);
+
+  const clubData = useMemo(() => {
+    const picks = clubLocalPicks;
+    const selectedKey = clubItem || (picks[0]?.mediaKey || null);
+    // Find users who posted about the selected club item
+    const clubMembers = [];
+    if (selectedKey) {
+      const seen = new Set();
+      posts.forEach(p => {
+        if (getMediaKey(p.media) === selectedKey && p.author?.name !== CURRENT_USER.name && !seen.has(p.author?.name)) {
+          seen.add(p.author.name);
+          clubMembers.push(p.author);
+        }
+      });
+    }
+    return { recommendedKey: selectedKey, members: clubMembers, picks };
+  }, [posts, clubItem, clubLocalPicks, CURRENT_USER.name]);
+>>>>>>> 9d96e2c (Update)
 
   const filteredPosts = useMemo(() => {
     let result = posts;
@@ -1387,7 +1767,12 @@ export default function App() {
                   <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Profile</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: profileColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{profileEmoji}</div>
+<<<<<<< HEAD
                     <input value={profileName} onChange={e => setProfileName(e.target.value.slice(0, 12))} style={{ border: `1px solid ${isDark ? "#4B5563" : "#D1D5DB"}`, borderRadius: "8px", padding: "6px 10px", fontFamily: "'DM Sans'", fontSize: "13px", width: "100px", outline: "none", background: isDark ? "#374151" : "white", color: isDark ? "#F9FAFB" : "#1a1a1a" }} />
+=======
+                    <input value={profileName} onChange={e => setProfileName(e.target.value.slice(0, 20))} style={{ border: `1px solid ${isDark ? "#4B5563" : "#D1D5DB"}`, borderRadius: "8px", padding: "6px 10px", fontFamily: "'DM Sans'", fontSize: "13px", width: "140px", outline: "none", background: isDark ? "#374151" : "white", color: isDark ? "#F9FAFB" : "#1a1a1a" }} />
+                    <button onClick={() => setProfileName(generateNickname())} style={{ background: isDark ? "#374151" : "#F3F4F6", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "13px" }} title="Random name">🎲</button>
+>>>>>>> 9d96e2c (Update)
                   </div>
                   <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", maxWidth: "200px" }}>
                     {PROFILE_EMOJIS.map(e => (
@@ -1403,8 +1788,13 @@ export default function App() {
                 {/* Language */}
                 <div>
                   <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{t.language}</div>
+<<<<<<< HEAD
                   <div style={{ display: "flex", gap: "6px" }}>
                     {[["en", "EN"], ["ko", "한"]].map(([k, label]) => (
+=======
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {[["en", "EN"], ["ko", "한"], ["ja", "日"], ["zh", "中"], ["es", "ES"]].map(([k, label]) => (
+>>>>>>> 9d96e2c (Update)
                       <button key={k} onClick={() => setLang(k)} style={{ background: lang === k ? "#1a1a1a" : (isDark ? "#374151" : "#F3F4F6"), color: lang === k ? "white" : (isDark ? "#D1D5DB" : "#6B7280"), border: "none", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600 }}>{label}</button>
                     ))}
                   </div>

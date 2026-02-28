@@ -1,0 +1,15 @@
+name = "commune-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "COMMUNE_DB"
+database_name = "commune-db"
+database_id = "81da8386-3c58-4a93-a089-c509110cde6d"
+
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+ALLOWED_ORIGIN = "https://jihaechoi.github.io"
+SPOTIFY_CLIENT_ID = "90a1a50053014a1388052dab2bbfc9c1"
