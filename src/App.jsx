@@ -59,6 +59,11 @@ const LANG = {
     similarDesc: "People who shared the same items as you.",
     addThoughts: "Add an item and share your thoughts",
     linkItem: "Now link an item below", writeThoughts: "Write your thoughts to publish",
+    justNow: "just now", mAgo: "m ago", hAgo: "h ago", dAgo: "d ago",
+    placeName: "Place Name", cuisine: "Cuisine / Type", townCountry: "Town, Country",
+    addPlace: "Add place", googlePowered: "Google Places powered",
+    noResultsPlace: "No results found", searchBtn: "Search",
+    randomName: "Random name", savedItem: "Saved item",
   },
   ko: {
     commune: "commune", tagline: "감동을 나누다",
@@ -88,6 +93,11 @@ const LANG = {
     similarDesc: "같은 아이템을 공유한 사람들입니다.",
     addThoughts: "아이템을 추가하고 생각을 공유하세요",
     linkItem: "아래에서 아이템을 연결하세요", writeThoughts: "생각을 적어주세요",
+    justNow: "방금", mAgo: "분 전", hAgo: "시간 전", dAgo: "일 전",
+    placeName: "장소 이름", cuisine: "음식 종류", townCountry: "도시, 나라",
+    addPlace: "장소 추가", googlePowered: "구글 검색",
+    noResultsPlace: "결과 없음", searchBtn: "검색",
+    randomName: "랜덤 이름", savedItem: "저장된 항목",
   },
   ja: {
     commune: "commune", tagline: "感動を分かち合う",
@@ -117,6 +127,11 @@ const LANG = {
     similarDesc: "同じアイテムを共有した人たちです。",
     addThoughts: "アイテムと感想を追加してください",
     linkItem: "下からアイテムをリンクしてください", writeThoughts: "感想を書いてください",
+    justNow: "たった今", mAgo: "分前", hAgo: "時間前", dAgo: "日前",
+    placeName: "場所名", cuisine: "料理・ジャンル", townCountry: "都市, 国",
+    addPlace: "場所を追加", googlePowered: "Google検索",
+    noResultsPlace: "結果なし", searchBtn: "検索",
+    randomName: "ランダム名", savedItem: "保存済み",
   },
   zh: {
     commune: "commune", tagline: "分享感动",
@@ -146,6 +161,11 @@ const LANG = {
     similarDesc: "分享过相同内容的人。",
     addThoughts: "添加内容并分享你的想法",
     linkItem: "在下方链接一个内容", writeThoughts: "写下你的想法",
+    justNow: "刚刚", mAgo: "分钟前", hAgo: "小时前", dAgo: "天前",
+    placeName: "地点名称", cuisine: "菜系/类型", townCountry: "城市, 国家",
+    addPlace: "添加地点", googlePowered: "谷歌搜索",
+    noResultsPlace: "没有结果", searchBtn: "搜索",
+    randomName: "随机名", savedItem: "已保存",
   },
   es: {
     commune: "commune", tagline: "comparte lo que te inspira",
@@ -175,6 +195,11 @@ const LANG = {
     similarDesc: "Personas que compartieron los mismos contenidos.",
     addThoughts: "Añade un contenido y comparte tu opinión",
     linkItem: "Enlaza un contenido abajo", writeThoughts: "Escribe tu opinión",
+    justNow: "ahora", mAgo: "m", hAgo: "h", dAgo: "d",
+    placeName: "Nombre del lugar", cuisine: "Cocina / Tipo", townCountry: "Ciudad, País",
+    addPlace: "Añadir lugar", googlePowered: "Búsqueda Google",
+    noResultsPlace: "Sin resultados", searchBtn: "Buscar",
+    randomName: "Nombre aleatorio", savedItem: "Guardado",
   },
 };
 const LangContext = createContext("en");
@@ -568,6 +593,7 @@ function LimitedTextarea({ value, onChange, placeholder }) {
    PLACE LINKER
    ═══════════════════════════════════════════════ */
 function PlaceLinker({ onAdd }) {
+  const t = useT();
   const [mode, setMode] = useState(null);
   const [mapsUrl, setMapsUrl] = useState("");
   const [name, setName] = useState("");
@@ -624,13 +650,13 @@ function PlaceLinker({ onAdd }) {
   if (!mode) return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
       <button onClick={() => setMode("search")} style={{ background: "#FDF4FF", border: "1px solid #E9D5FF", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "24px" }}>🔍</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#7E22CE" }}>Search places</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Google Places powered</div></div>
+        <span style={{ fontSize: "24px" }}>🔍</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#7E22CE" }}>{t.searchPlaces}</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>{t.googlePowered}</div></div>
       </button>
       <button onClick={() => setMode("url")} style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "24px" }}>🔗</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#374151" }}>Paste Google Maps link</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Auto-fills place name</div></div>
+        <span style={{ fontSize: "24px" }}>🔗</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#374151" }}>{t.pasteLink}</div></div>
       </button>
       <button onClick={() => setMode("manual")} style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "24px" }}>✏️</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#374151" }}>Enter manually</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>Type name, cuisine, location</div></div>
+        <span style={{ fontSize: "24px" }}>✏️</span><div><div style={{ fontFamily: "'DM Sans'", fontSize: "14px", fontWeight: 600, color: "#374151" }}>{t.enterManually}</div></div>
       </button>
     </div>
   );
@@ -639,10 +665,10 @@ function PlaceLinker({ onAdd }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       <div style={{ display: "flex", gap: "8px" }}>
         <input value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handlePlaceSearch()} placeholder="e.g. Korean BBQ Chicago, Blue Bottle Tokyo..." style={IS} autoFocus />
-        <button onClick={handlePlaceSearch} disabled={placeLoading} style={{ background: "#7E22CE", border: "none", borderRadius: "10px", padding: "10px 18px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 500, whiteSpace: "nowrap" }}>{placeLoading ? "..." : "Search"}</button>
+        <button onClick={handlePlaceSearch} disabled={placeLoading} style={{ background: "#7E22CE", border: "none", borderRadius: "10px", padding: "10px 18px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 500, whiteSpace: "nowrap" }}>{placeLoading ? "..." : t.searchBtn}</button>
       </div>
       {placeError && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#DC2626", padding: "8px 12px", background: "#FEF2F2", borderRadius: "10px" }}>⚠️ {placeError}</div>}
-      {placeResults && placeResults.length === 0 && !placeError && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", textAlign: "center", padding: "12px" }}>No results found</div>}
+      {placeResults && placeResults.length === 0 && !placeError && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", textAlign: "center", padding: "12px" }}>{t.noResultsPlace}</div>}
       {placeResults && placeResults.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "300px", overflowY: "auto" }}>
           {placeResults.slice(0, 6).map((p, i) => (
@@ -664,16 +690,16 @@ function PlaceLinker({ onAdd }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       {mode === "url" && <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#7E22CE", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Google Maps Link</label><input value={mapsUrl} onChange={e => handleUrlPaste(e.target.value)} placeholder="https://www.google.com/maps/place/..." style={IS} autoFocus /></div>}
-      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Place Name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Blue Bottle Coffee" style={IS} autoFocus={mode === "manual"} /></div>
+      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>{t.placeName} *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Blue Bottle Coffee" style={IS} autoFocus={mode === "manual"} /></div>
       <div style={{ position: "relative" }}>
-        <label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Cuisine / Type</label>
+        <label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>{t.cuisine}</label>
         <input value={cuisine || cf} onChange={e => { setCf(e.target.value); setCuisine(""); setShowDrop(true); }} onFocus={() => setShowDrop(true)} placeholder="e.g. Korean, Café..." style={IS} />
         {showDrop && <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 20, background: "white", borderRadius: "10px", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", maxHeight: "160px", overflowY: "auto", marginTop: "4px" }}>
           {filtered.map(c => <button key={c} onClick={() => { setCuisine(c); setCf(""); setShowDrop(false); }} style={{ display: "block", width: "100%", padding: "8px 14px", border: "none", background: "white", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "#374151", textAlign: "left" }}>{c}</button>)}
           {cf && !filtered.includes(cf) && <button onClick={() => { setCuisine(cf); setCf(""); setShowDrop(false); }} style={{ display: "block", width: "100%", padding: "8px 14px", border: "none", background: "white", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "#7E22CE", textAlign: "left", borderTop: "1px solid #F3F4F6" }}>+ Use "{cf}"</button>}
         </div>}
       </div>
-      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Town, Country</label><input value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAdd()} placeholder="e.g. Gangnam, Seoul" style={IS} /></div>
+      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>{t.townCountry}</label><input value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAdd()} placeholder="e.g. Gangnam, Seoul" style={IS} /></div>
       {mq && <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #E9D5FF" }}>
         <div style={{ padding: "10px 14px", background: "#FDF4FF" }}>
           <div style={{ fontFamily: "'Instrument Serif'", fontSize: "16px", color: "#1a1a1a" }}>{name}</div>
@@ -684,7 +710,7 @@ function PlaceLinker({ onAdd }) {
         </div>
         <iframe width="100%" height="140" frameBorder="0" style={{ border: 0, display: "block" }} loading="lazy" src={`https://www.google.com/maps?q=${mq}&output=embed`} allowFullScreen />
       </div>}
-      <button onClick={handleAdd} disabled={!name.trim()} style={{ background: name.trim() ? "#7E22CE" : "#D1D5DB", border: "none", borderRadius: "10px", padding: "10px 18px", cursor: name.trim() ? "pointer" : "default", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 600, alignSelf: "flex-end" }}>📍 Add place</button>
+      <button onClick={handleAdd} disabled={!name.trim()} style={{ background: name.trim() ? "#7E22CE" : "#D1D5DB", border: "none", borderRadius: "10px", padding: "10px 18px", cursor: name.trim() ? "pointer" : "default", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 600, alignSelf: "flex-end" }}>📍 {t.addPlace}</button>
     </div>
   );
 }
@@ -716,6 +742,7 @@ function ResultPicker({ title, items, onSelect, onReset, renderItem }) {
    CONTENT LINKER
    ═══════════════════════════════════════════════ */
 function ContentLinker({ onAdd }) {
+  const t = useT();
   const [mode, setMode] = useState(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -846,8 +873,8 @@ function ContentLinker({ onAdd }) {
   };
   const btnLabel = () => {
     if (loading) return "...";
-    if ((mode === "spotify" && !parseSpotifyUrl(input)) || mode === "movie") return "Search";
-    return "Add";
+    if ((mode === "spotify" && !parseSpotifyUrl(input)) || mode === "movie") return t.searchBtn;
+    return t.addPlace;
   };
   return (
     <div style={{ background: "#F9FAFB", borderRadius: "14px", padding: "16px", border: "1px solid #E5E7EB" }}>
@@ -878,6 +905,7 @@ function ContentLinker({ onAdd }) {
    POST
    ═══════════════════════════════════════════════ */
 function Post({ post, onAddReaction, onRemoveReaction, onViewItem, onSave, savedIds, currentUser }) {
+  const t = useT();
   const [showReactions, setShowReactions] = useState(false);
   const isSaved = savedIds?.has(post.id);
   return (
@@ -894,7 +922,7 @@ function Post({ post, onAddReaction, onRemoveReaction, onViewItem, onSave, saved
       {post.reactions.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>{post.reactions.map(r => <FloatingReaction key={r.id} emoji={r.emoji} onComplete={() => onRemoveReaction(post.id, r.id)} />)}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", paddingTop: "14px", borderTop: "1px solid #F3F4F6", position: "relative" }}>
         <button onClick={() => setShowReactions(!showReactions)} style={{ background: showReactions ? "#FEF2F2" : "#F9FAFB", border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: showReactions ? "#E8453C" : "#6B7280", fontWeight: 500 }}>😊 React</button>
-        {post.media && <button onClick={() => onViewItem(getMediaKey(post.media))} style={{ marginLeft: "auto", background: "#F9FAFB", border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280", fontWeight: 500 }}>View all thoughts →</button>}
+        {post.media && <button onClick={() => onViewItem(getMediaKey(post.media))} style={{ marginLeft: "auto", background: "#F9FAFB", border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280", fontWeight: 500 }}>{t.viewAll}</button>}
         {showReactions && <div style={{ position: "absolute", bottom: "48px", left: 0, background: "white", borderRadius: "18px", padding: "8px 10px", boxShadow: "0 4px 24px rgba(0,0,0,0.12)", display: "flex", gap: "4px", animation: "fadeSlideUp 0.2s ease", zIndex: 10 }}>{REACTION_EMOJIS.map(emoji => <button key={emoji} onClick={() => { onAddReaction(post.id, emoji); setShowReactions(false); }} style={{ background: "none", border: "none", fontSize: "22px", cursor: "pointer", padding: "6px", borderRadius: "10px" }}>{emoji}</button>)}</div>}
       </div>
     </article>
@@ -935,6 +963,7 @@ function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction, onRemoveReacti
    COMPOSE MODAL
    ═══════════════════════════════════════════════ */
 function ComposeModal({ onClose, onPublish, dailyCount, currentUser }) {
+  const t = useT();
   const [text, setText] = useState("");
   const [media, setMedia] = useState(null);
   const canPublish = text.trim() && countWords(text) <= MAX_WORDS && media && dailyCount < 5;
@@ -943,29 +972,29 @@ function ComposeModal({ onClose, onPublish, dailyCount, currentUser }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, animation: "fadeIn 0.2s ease" }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: "28px", padding: "32px", width: "92%", maxWidth: "560px", boxShadow: "0 24px 64px rgba(0,0,0,0.15)", animation: "fadeSlideUp 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ fontFamily: "'Instrument Serif'", fontSize: "24px", margin: 0 }}>Share something</h2>
+          <h2 style={{ fontFamily: "'Instrument Serif'", fontSize: "24px", margin: 0 }}>{t.shareSomething}</h2>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: atLimit ? "#DC2626" : "#9CA3AF", fontWeight: 500 }}>{dailyCount}/5 today</span>
+            <span style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: atLimit ? "#DC2626" : "#9CA3AF", fontWeight: 500 }}>{dailyCount}/5 {t.today}</span>
             <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", width: "36px", height: "36px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280" }}>×</button>
           </div>
         </div>
         {atLimit ? (
           <div style={{ textAlign: "center", padding: "32px 20px", fontFamily: "'DM Sans'" }}>
             <div style={{ fontSize: "40px", marginBottom: "12px" }}>🚫</div>
-            <div style={{ fontSize: "15px", color: "#DC2626", fontWeight: 600 }}>Daily limit reached</div>
-            <div style={{ fontSize: "13px", color: "#9CA3AF", marginTop: "4px" }}>You can share up to 5 items per day. Come back tomorrow!</div>
+            <div style={{ fontSize: "15px", color: "#DC2626", fontWeight: 600 }}>{t.dailyLimit}</div>
+            <div style={{ fontSize: "13px", color: "#9CA3AF", marginTop: "4px" }}>{t.dailyLimitDesc}</div>
           </div>
         ) : (<>
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "4px" }}>
             <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: currentUser.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{currentUser.emoji}</div>
-            <LimitedTextarea value={text} onChange={setText} placeholder="Share your thoughts..." />
+            <LimitedTextarea value={text} onChange={setText} placeholder={t.whatSharing} />
           </div>
-          {(!text.trim() || !media) && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", marginBottom: "12px", padding: "8px 12px", background: "#F9FAFB", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}><span>💡</span>{!media && !text.trim() ? "Add an item and share your thoughts" : !media ? "Now link an item below" : "Write your thoughts to publish"}</div>}
+          {(!text.trim() || !media) && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", marginBottom: "12px", padding: "8px 12px", background: "#F9FAFB", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}><span>💡</span>{!media && !text.trim() ? t.addThoughts : !media ? t.linkItem : t.writeThoughts}</div>}
           {media && <div style={{ position: "relative", marginBottom: "16px" }}><MediaCard media={media} compact /><button onClick={() => setMedia(null)} style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.6)", border: "none", width: "28px", height: "28px", borderRadius: "50%", cursor: "pointer", color: "white", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button></div>}
           {!media && <div style={{ paddingTop: "16px", borderTop: "1px solid #F3F4F6", marginBottom: "20px" }}><ContentLinker onAdd={m => setMedia(m)} /></div>}
           <button onClick={() => { if (canPublish) { onPublish(text, media); onClose(); } }} disabled={!canPublish}
             style={{ width: "100%", background: canPublish ? "#1a1a1a" : "#E5E7EB", border: "none", borderRadius: "14px", padding: "14px", cursor: canPublish ? "pointer" : "default", fontFamily: "'DM Sans'", fontSize: "15px", color: canPublish ? "white" : "#9CA3AF", fontWeight: 600 }}>
-            {canPublish ? "Publish" : countWords(text) > MAX_WORDS ? `Over ${MAX_WORDS} word limit` : "Add item + thoughts to publish"}
+            {canPublish ? t.publish : countWords(text) > MAX_WORDS ? t.overLimit : t.addItemToPublish}
           </button>
         </>)}
       </div>
@@ -977,6 +1006,7 @@ function ComposeModal({ onClose, onPublish, dailyCount, currentUser }) {
    SEARCH BAR
    ═══════════════════════════════════════════════ */
 function SearchBar({ query, onQueryChange, activeFilter, onFilterChange, savedItems, onUnsave }) {
+  const t = useT();
   return (
     <div style={{ marginBottom: "16px" }}>
       <div style={{ position: "relative", marginBottom: "12px" }}>
@@ -1010,7 +1040,7 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange, savedIt
           {savedItems.length === 0 ? (
             <div style={{ textAlign: "center", padding: "24px", fontFamily: "'DM Sans'", fontSize: "13px", color: "#9CA3AF" }}>
               <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔖</div>
-              No saved items yet. Tap 📌 on any post to save it.
+              {t.noSaved}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1020,7 +1050,7 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange, savedIt
                     {s.media?.type === "book" ? "📚" : s.media?.type === "spotify" ? "🎵" : s.media?.type === "movie" ? "🎥" : s.media?.type === "place" ? "📍" : "📄"}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.media?.title || s.media?.name || "Saved item"}</div>
+                    <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.media?.title || s.media?.name || t.savedItem}</div>
                     <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>{s.media?.author || s.media?.artist || s.media?.location || s.media?.type}</div>
                   </div>
                   <button onClick={() => onUnsave?.(s.id)} style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "4px 8px", cursor: "pointer", fontSize: "12px" }}>✕</button>
@@ -1049,6 +1079,7 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
 
   return (
     <div style={{ marginBottom: "16px" }}>
+      {/* Group tabs */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
         {groups.map(g => (
           <button key={g.key} onClick={() => { onGroupChange(g.key); setShowPanel(true); }}
@@ -1160,19 +1191,20 @@ function GroupSelector({ activeGroup, onGroupChange, randomMembers, similarMembe
 /* ═══════════════════════════════════════════════
    API HELPERS
    ═══════════════════════════════════════════════ */
-function timeAgo(dateStr) {
+function timeAgo(dateStr, lang) {
+  const t = LANG[lang] || LANG.en;
   const now = new Date();
-  const d = new Date(dateStr + (dateStr.endsWith("Z") ? "" : "Z")); // ensure UTC
+  const d = new Date(dateStr + (dateStr.endsWith("Z") ? "" : "Z"));
   const diff = Math.max(0, now - d);
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t.justNow;
+  if (mins < 60) return `${mins}${t.mAgo}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return `${hrs}${t.hAgo}`;
+  return `${Math.floor(hrs / 24)}${t.dAgo}`;
 }
 
-async function fetchPosts() {
+async function fetchPosts(lang) {
   try {
     const res = await fetch(`${WORKER_URL}/posts`, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) { console.error("fetchPosts failed:", res.status); return []; }
@@ -1180,7 +1212,7 @@ async function fetchPosts() {
     return data.map(p => ({
       id: p.id,
       author: p.author,
-      time: timeAgo(p.createdAt),
+      time: timeAgo(p.createdAt, lang),
       text: p.text,
       media: p.media,
       reactions: p.reactions || [],
@@ -1299,13 +1331,13 @@ export default function App() {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const data = await fetchPosts();
+      const data = await fetchPosts(lang);
       if (active) { setPosts(data); setLoading(false); }
     };
     load();
     const interval = setInterval(load, 300000);
     return () => { active = false; clearInterval(interval); };
-  }, []);
+  }, [lang]);
 
   // Load saves and daily count and club picks on mount
   useEffect(() => {
@@ -1331,7 +1363,7 @@ export default function App() {
     if (dailyCount >= 5) return;
     const tempId = "temp-" + Date.now();
     const mediaKey = getMediaKey(media);
-    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
+    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: (LANG[lang] || LANG.en).justNow, text, media, reactions: [] }, ...prev]);
     try {
       const result = await apiCreatePost(CURRENT_USER, text, media, mediaKey);
       setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
@@ -1517,11 +1549,11 @@ export default function App() {
               <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
                 {/* Profile */}
                 <div>
-                  <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Profile</div>
+                  <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{t.profile}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: profileColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{profileEmoji}</div>
                     <input value={profileName} onChange={e => setProfileName(e.target.value.slice(0, 20))} style={{ border: `1px solid ${isDark ? "#4B5563" : "#D1D5DB"}`, borderRadius: "8px", padding: "6px 10px", fontFamily: "'DM Sans'", fontSize: "13px", width: "140px", outline: "none", background: isDark ? "#374151" : "white", color: isDark ? "#F9FAFB" : "#1a1a1a" }} />
-                    <button onClick={() => setProfileName(generateNickname())} style={{ background: isDark ? "#374151" : "#F3F4F6", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "13px" }} title="Random name">🎲</button>
+                    <button onClick={() => setProfileName(generateNickname())} style={{ background: isDark ? "#374151" : "#F3F4F6", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "13px" }} title={t.randomName}>🎲</button>
                   </div>
                   <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", maxWidth: "200px" }}>
                     {PROFILE_EMOJIS.map(e => (
