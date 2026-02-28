@@ -28,7 +28,10 @@ function getOrCreateUser() {
 // Module-level initial read; App manages live state via useState
 const INITIAL_USER = getOrCreateUser();
 const REACTION_EMOJIS = ["❤️", "🔥", "😂", "🤯", "💀", "🥺", "👏", "✨"];
+<<<<<<< HEAD
 const REACTION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+=======
+>>>>>>> 08105c9 (Update search)
 const MAX_WORDS = 150;
 
 const CUISINE_OPTIONS = ["Korean","Japanese","Chinese","Thai","Vietnamese","Indian","Italian","French","Mexican","American","Mediterranean","Café","Bakery","Bar","Brunch","Fine Dining","Street Food","Vegan","Seafood","BBQ","Pizza","Ramen","Sushi","Other"];
@@ -121,6 +124,7 @@ function volToBook(vol) {
 
 async function searchBooks(query) {
   const isIsbn = isISBN(query);
+<<<<<<< HEAD
   const q = isIsbn ? `isbn:${query.replace(/[-\s]/g, "")}` : encodeURIComponent(query);
   const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=${isIsbn ? 1 : 6}`);
   if (res.ok) {
@@ -128,6 +132,46 @@ async function searchBooks(query) {
     if (data.items?.length) return data.items.map(item => volToBook(item.volumeInfo));
   }
   // Fallback: Korean National Library (NL) API via Cloudflare Worker proxy
+=======
+  // Try Google Books first
+  try {
+    const q = isIsbn ? `isbn:${query.replace(/[-\s]/g, "")}` : encodeURIComponent(query);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=${isIsbn ? 1 : 6}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.items?.length) return data.items.map(item => volToBook(item.volumeInfo));
+    }
+  } catch {}
+  // Fallback 1: Open Library Search API (free, no key, no rate limit)
+  try {
+    const olQuery = isIsbn
+      ? `https://openlibrary.org/search.json?isbn=${query.replace(/[-\s]/g, "")}&limit=1`
+      : `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=6`;
+    const olRes = await fetch(olQuery, { signal: AbortSignal.timeout(8000) });
+    if (olRes.ok) {
+      const olData = await olRes.json();
+      if (olData.docs?.length) {
+        return olData.docs.slice(0, 6).map(d => {
+          const isbn = d.isbn?.[0] || null;
+          const isbn13 = isbn ? normalizeIsbn13(isbn) : null;
+          return {
+            type: "book",
+            isbn13,
+            title: d.title || "Unknown",
+            subtitle: d.subtitle || null,
+            author: d.author_name?.join(", ") || "Unknown",
+            cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : (isbn13 ? `https://covers.openlibrary.org/b/isbn/${isbn13}-L.jpg?default=false` : null),
+            pages: d.number_of_pages_median || null,
+            publishDate: d.first_publish_year?.toString() || null,
+            categories: d.subject?.slice(0, 3) || [],
+            url: isbn13 ? `https://openlibrary.org/isbn/${isbn13}` : `https://openlibrary.org${d.key}`,
+          };
+        });
+      }
+    }
+  } catch {}
+  // Fallback 2: Korean National Library (NL) API via Worker proxy
+>>>>>>> 08105c9 (Update search)
   if (isIsbn && WORKER_URL) {
     try {
       const clean = query.replace(/[-\s]/g, "");
@@ -324,7 +368,6 @@ function PlaceCard({ media, compact }) {
           {media.cuisine && <span style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 500, background: "#E9D5FF", color: "#6B21A8", padding: "3px 10px", borderRadius: "8px" }}>🍽️ {media.cuisine}</span>}
           {media.location && <span style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 500, background: "#F3E8FF", color: "#7E22CE", padding: "3px 10px", borderRadius: "8px" }}>📍 {media.location}</span>}
         </div>
-        {media.note && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280", fontStyle: "italic", marginTop: "6px" }}>"{media.note}"</div>}
       </div>
       <div style={{ width: "100%", height: compact ? "140px" : "180px", borderTop: "1px solid #E9D5FF" }}>
         <iframe width="100%" height={compact ? "140" : "180"} frameBorder="0" style={{ border: 0, display: "block" }} loading="lazy" src={`https://www.google.com/maps?q=${mq}&output=embed`} allowFullScreen />
@@ -353,6 +396,7 @@ function MediaCard({ media, compact }) {
 /* ═══════════════════════════════════════════════
    REACTION BAR  (24-hour persistent badges)
    ═══════════════════════════════════════════════ */
+<<<<<<< HEAD
 function reactionTimeLeft(createdAt) {
   const remaining = REACTION_EXPIRY_MS - (Date.now() - createdAt);
   if (remaining <= 0) return null;
@@ -394,6 +438,12 @@ function ReactionBar({ reactions }) {
           </div>
         );
       })}
+=======
+function FloatingReaction({ emoji, onComplete }) {
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.95)", borderRadius: "20px", padding: "4px 10px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+      <span style={{ fontSize: "16px" }}>{emoji}</span>
+>>>>>>> 08105c9 (Update search)
     </div>
   );
 }
@@ -424,7 +474,6 @@ function PlaceLinker({ onAdd }) {
   const [name, setName] = useState("");
   const [cuisine, setCuisine] = useState("");
   const [location, setLocation] = useState("");
-  const [note, setNote] = useState("");
   const [showDrop, setShowDrop] = useState(false);
   const [cf, setCf] = useState("");
   const [mq, setMq] = useState("");
@@ -436,7 +485,7 @@ function PlaceLinker({ onAdd }) {
     return () => clearTimeout(db.current);
   }, [name, location]);
   const filtered = CUISINE_OPTIONS.filter(c => c.toLowerCase().includes(cf.toLowerCase()));
-  const handleAdd = () => { if (!name.trim()) return; onAdd({ type: "place", name: name.trim(), cuisine: cuisine || null, location: location.trim() || null, note: note.trim() || null, mapsUrl: mapsUrl.trim() || null }); };
+  const handleAdd = () => { if (!name.trim()) return; onAdd({ type: "place", name: name.trim(), cuisine: cuisine || null, location: location.trim() || null, mapsUrl: mapsUrl.trim() || null }); };
   const IS = { border: "1px solid #D1D5DB", borderRadius: "10px", padding: "10px 14px", fontFamily: "'DM Sans'", fontSize: "13px", outline: "none", background: "white", width: "100%" };
   if (!mode) return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -460,8 +509,7 @@ function PlaceLinker({ onAdd }) {
           {cf && !filtered.includes(cf) && <button onClick={() => { setCuisine(cf); setCf(""); setShowDrop(false); }} style={{ display: "block", width: "100%", padding: "8px 14px", border: "none", background: "white", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "#7E22CE", textAlign: "left", borderTop: "1px solid #F3F4F6" }}>+ Use "{cf}"</button>}
         </div>}
       </div>
-      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Town, Country</label><input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Gangnam, Seoul" style={IS} /></div>
-      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Your Note (optional)</label><input value={note} onChange={e => setNote(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAdd()} placeholder="Why you love it..." style={IS} /></div>
+      <div><label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px", display: "block" }}>Town, Country</label><input value={location} onChange={e => setLocation(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAdd()} placeholder="e.g. Gangnam, Seoul" style={IS} /></div>
       {mq && <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #E9D5FF" }}>
         <div style={{ padding: "10px 14px", background: "#FDF4FF" }}>
           <div style={{ fontFamily: "'Instrument Serif'", fontSize: "16px", color: "#1a1a1a" }}>{name}</div>
@@ -1001,7 +1049,11 @@ async function fetchPosts() {
       time: timeAgo(p.createdAt),
       text: p.text,
       media: p.media,
+<<<<<<< HEAD
       reactions: (p.reactions || []).map(r => ({ ...r, createdAt: r.createdAt || Date.now() })),
+=======
+      reactions: p.reactions || [],
+>>>>>>> 08105c9 (Update search)
     }));
   } catch (err) { console.error("fetchPosts error:", err); return []; }
 }
@@ -1036,8 +1088,11 @@ async function apiAddReaction(postId, emoji, userName) {
 export default function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
   const [currentUser, setCurrentUser] = useState(INITIAL_USER);
   const [editingProfile, setEditingProfile] = useState(false);
+=======
+>>>>>>> 08105c9 (Update search)
   const [composing, setComposing] = useState(false);
   const [page, setPage] = useState("feed");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1058,6 +1113,47 @@ export default function App() {
     load();
     const interval = setInterval(load, 300000); // 5분마다 새 포스트 확인
     return () => { active = false; clearInterval(interval); };
+<<<<<<< HEAD
+=======
+  }, []);
+
+  const addReaction = useCallback((postId, emoji) => {
+    const id = ++rIdRef.current;
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
+      return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
+    }));
+    // Fire-and-forget to API
+    apiAddReaction(postId, emoji, CURRENT_USER.name);
+  }, []);
+  const removeReaction = useCallback((postId, rid) => {
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
+  }, []);
+  const publishPost = useCallback(async (text, media) => {
+    // Optimistic UI update
+    const tempId = "temp-" + Date.now();
+    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
+    try {
+      const result = await apiCreatePost(CURRENT_USER, text, media);
+      // Replace temp ID with real ID
+      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
+    } catch {
+      // Remove on failure
+      setPosts(prev => prev.filter(p => p.id !== tempId));
+    }
+  }, []);
+
+  // ── Group membership logic ──
+  const randomGroupMembers = useMemo(() => {
+    const allUsers = AVATARS.filter(a => a.name !== CURRENT_USER.name);
+    const shuffled = [...allUsers].sort((a, b) => {
+      const ha = a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1);
+      const hb = b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1);
+      return ha - hb;
+    });
+    return shuffled.slice(0, 3);
+>>>>>>> 08105c9 (Update search)
   }, []);
 
   const addReaction = useCallback((postId, emoji) => {
@@ -1137,7 +1233,35 @@ export default function App() {
     const recommendedKey = clubItem || (popular[0]?.[0] || null);
     const members = allOtherAuthors.slice(0, 4);
     return { recommendedKey, members };
+<<<<<<< HEAD
   }, [posts, clubItem, currentUser, allOtherAuthors]);
+=======
+  }, [posts, clubItem]);
+
+  const addReaction = useCallback((postId, emoji) => {
+    const id = ++rIdRef.current;
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
+      return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
+    }));
+    apiAddReaction(postId, emoji, CURRENT_USER.name);
+  }, []);
+  const removeReaction = useCallback((postId, rid) => {
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
+  }, []);
+  const publishPost = useCallback(async (text, media) => {
+    const tempId = "temp-" + Date.now();
+    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
+    try {
+      const result = await apiCreatePost(CURRENT_USER, text, media);
+      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
+    } catch (err) {
+      console.error("publishPost error:", err);
+      // Keep the post in UI even if API fails (offline-friendly)
+    }
+  }, []);
+>>>>>>> 08105c9 (Update search)
 
   const filteredPosts = useMemo(() => {
     let result = posts;
@@ -1145,6 +1269,7 @@ export default function App() {
     // ── Group filtering (feed page only — search page shows all) ──
     if (page === "feed") {
       if (activeGroup === "random") {
+<<<<<<< HEAD
         const names = new Set([currentUser.name, ...randomGroupMembers.map(m => m.name)]);
         result = result.filter(p => names.has(p.author?.name));
       } else if (activeGroup === "similar") {
@@ -1152,6 +1277,15 @@ export default function App() {
         result = result.filter(p => names.has(p.author?.name));
       } else if (activeGroup === "club") {
         const names = new Set([currentUser.name, ...clubData.members.map(m => m.name)]);
+=======
+        const names = new Set([CURRENT_USER.name, ...randomGroupMembers.map(m => m.name)]);
+        result = result.filter(p => names.has(p.author?.name));
+      } else if (activeGroup === "similar") {
+        const names = new Set([CURRENT_USER.name, ...similarGroupMembers.map(m => m.name)]);
+        result = result.filter(p => names.has(p.author?.name));
+      } else if (activeGroup === "club") {
+        const names = new Set([CURRENT_USER.name, ...clubData.members.map(m => m.name)]);
+>>>>>>> 08105c9 (Update search)
         result = result.filter(p => names.has(p.author?.name));
         if (clubData.recommendedKey) {
           result = result.sort((a, b) => {
@@ -1170,9 +1304,9 @@ export default function App() {
         return p.media?.type === activeFilter;
       });
     }
-    // Search — media metadata only
+    // Search — tokenized keyword matching (each word must match somewhere)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const tokens = searchQuery.toLowerCase().split(/[\s,]+/).filter(Boolean);
       result = result.filter(p => {
         const m = p.media;
         if (!m) return false;
@@ -1183,8 +1317,9 @@ export default function App() {
           m.overview, m.channel,
           m.name, m.cuisine, m.location,
           m.displayUrl, m.releaseDate, m.tmdbId,
+          p.text,
         ].filter(Boolean).join(" ").toLowerCase();
-        return fields.includes(q);
+        return tokens.every(t => fields.includes(t));
       });
     }
     return result;
@@ -1253,7 +1388,11 @@ export default function App() {
                   </div>
                 )}
                 {!loading && filteredPosts.map(post => (
+<<<<<<< HEAD
                   <Post key={post.id} post={post} onAddReaction={addReaction} onViewItem={handleViewItem} />
+=======
+                  <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} />
+>>>>>>> 08105c9 (Update search)
                 ))}
                 {!loading && page === "feed" && filteredPosts.length === 0 && (
                   <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
