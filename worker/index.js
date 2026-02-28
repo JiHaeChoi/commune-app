@@ -117,6 +117,40 @@ export default {
       // ══════════════════════════════════
       // Google Places Text Search
       // ══════════════════════════════════
+      // ══════════════════════════════════
+      // Google Places Debug Test
+      // ══════════════════════════════════
+      if (method === "GET" && path === "/places/test") {
+        if (!env.GOOGLE_PLACES_KEY) return json({ error: "GOOGLE_PLACES_KEY not set", fix: "Cloudflare Dashboard → Workers → commune-api → Settings → Variables → Add GOOGLE_PLACES_KEY" }, 500, h);
+        try {
+          const r = await fetch("https://places.googleapis.com/v1/places:searchText", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Goog-Api-Key": env.GOOGLE_PLACES_KEY,
+              "X-Goog-FieldMask": "places.displayName,places.formattedAddress",
+            },
+            body: JSON.stringify({ textQuery: "Starbucks Seoul", pageSize: 1 }),
+          });
+          const body = await r.text();
+          let parsed;
+          try { parsed = JSON.parse(body); } catch { parsed = body; }
+          return json({
+            googleStatus: r.status,
+            keyPresent: true,
+            keyLength: env.GOOGLE_PLACES_KEY.length,
+            keyPrefix: env.GOOGLE_PLACES_KEY.substring(0, 8) + "...",
+            response: parsed,
+            fix: r.ok ? null : r.status === 403 ? "API key denied. Check: 1) Places API (New) enabled? 2) Billing enabled? 3) API key restrictions?" : r.status === 400 ? "Bad request — check API key format" : "Unknown error",
+          }, r.ok ? 200 : r.status, h);
+        } catch (e) {
+          return json({ error: "Fetch failed: " + e.message, fix: "Network issue from Worker" }, 500, h);
+        }
+      }
+
+      // ══════════════════════════════════
+      // Google Places Text Search
+      // ══════════════════════════════════
       if (method === "GET" && path === "/places/search") {
         const q = url.searchParams.get("q");
         if (!q) return json({ error: "Missing ?q=" }, 400, h);
