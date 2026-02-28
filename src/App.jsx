@@ -16,9 +16,10 @@ const AVATARS = [
   { name: "Yuki", color: "#0EA5E9", emoji: "❄️" },
   { name: "Fern", color: "#16A34A", emoji: "🌾" },
 ];
-const CURRENT_USER = AVATARS[1];
+const CURRENT_USER_DEFAULT = AVATARS[1];
 const REACTION_EMOJIS = ["❤️", "🔥", "😂", "🤯", "💀", "🥺", "👏", "✨"];
 const MAX_WORDS = 150;
+const PROFILE_EMOJIS = ["🐋", "🦊", "🦋", "🌿", "✨", "🦩", "🐙", "🌸", "🚀", "🍊", "❄️", "🌾", "🐻", "🐱", "🐸", "🌻", "🔮", "🎸", "🦄", "🐧"];
 
 const BG_COLORS = [
   { key: "warm",   label: "Warm",   bg: "linear-gradient(180deg, #F5F3EF 0%, #EDE9E3 100%)", headerBg: "rgba(245,243,239,0.85)" },
@@ -803,25 +804,17 @@ function ContentLinker({ onAdd }) {
 /* ═══════════════════════════════════════════════
    POST
    ═══════════════════════════════════════════════ */
-function Post({ post, onAddReaction, onRemoveReaction, onViewItem, onSave, savedIds }) {
+function Post({ post, onAddReaction, onRemoveReaction, onViewItem, onSave, savedIds, currentUser }) {
   const [showReactions, setShowReactions] = useState(false);
-  const [copied, setCopied] = useState(false);
   const isSaved = savedIds?.has(post.id);
-  const handleShare = () => {
-    const url = window.location.origin + window.location.pathname + `#post-${post.id}`;
-    navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-  };
   return (
     <article style={{ background: "white", borderRadius: "24px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.04)", animation: "fadeSlideUp 0.4s ease" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
         <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: post.author?.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{post.author?.emoji}</div>
         <div style={{ flex: 1 }}><div style={{ fontFamily: "'DM Sans'", fontWeight: 600, fontSize: "15px", color: "#1a1a1a" }}>{post.author?.name}</div><div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF" }}>{post.time}</div></div>
-        <div style={{ display: "flex", gap: "4px" }}>
-          <button onClick={handleShare} title="Copy link" style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", padding: "4px", opacity: 0.5 }}>{copied ? "✅" : "🔗"}</button>
-          {post.author?.name !== CURRENT_USER.name && (
-            <button onClick={() => onSave?.(post)} title={isSaved ? "Saved" : "Save"} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", padding: "4px", opacity: isSaved ? 1 : 0.5 }}>{isSaved ? "🔖" : "📌"}</button>
-          )}
-        </div>
+        {post.author?.name !== currentUser.name && (
+          <button onClick={() => onSave?.(post)} title={isSaved ? "Saved" : "Save"} style={{ background: isSaved ? "#FEF2F2" : "#F9FAFB", border: `1px solid ${isSaved ? "#FECACA" : "#E5E7EB"}`, borderRadius: "10px", padding: "6px 10px", cursor: "pointer", fontSize: "14px" }}>{isSaved ? "🔖" : "📌"}</button>
+        )}
       </div>
       <p style={{ fontFamily: "'DM Sans'", fontSize: "15px", lineHeight: 1.65, color: "#374151", margin: "0 0 18px 0" }}>{post.text}</p>
       {post.media && <div style={{ marginBottom: "18px", cursor: "pointer" }} onClick={() => onViewItem(getMediaKey(post.media))}><MediaCard media={post.media} compact /></div>}
@@ -868,7 +861,7 @@ function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction, onRemoveReacti
 /* ═══════════════════════════════════════════════
    COMPOSE MODAL
    ═══════════════════════════════════════════════ */
-function ComposeModal({ onClose, onPublish, dailyCount }) {
+function ComposeModal({ onClose, onPublish, dailyCount, currentUser }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState(null);
   const canPublish = text.trim() && countWords(text) <= MAX_WORDS && media && dailyCount < 5;
@@ -891,7 +884,7 @@ function ComposeModal({ onClose, onPublish, dailyCount }) {
           </div>
         ) : (<>
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "4px" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: CURRENT_USER.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{CURRENT_USER.emoji}</div>
+            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: currentUser.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{currentUser.emoji}</div>
             <LimitedTextarea value={text} onChange={setText} placeholder="Share your thoughts..." />
           </div>
           {(!text.trim() || !media) && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", marginBottom: "12px", padding: "8px 12px", background: "#F9FAFB", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}><span>💡</span>{!media && !text.trim() ? "Add an item and share your thoughts" : !media ? "Now link an item below" : "Write your thoughts to publish"}</div>}
@@ -910,7 +903,7 @@ function ComposeModal({ onClose, onPublish, dailyCount }) {
 /* ═══════════════════════════════════════════════
    SEARCH BAR
    ═══════════════════════════════════════════════ */
-function SearchBar({ query, onQueryChange, activeFilter, onFilterChange }) {
+function SearchBar({ query, onQueryChange, activeFilter, onFilterChange, savedItems, onUnsave }) {
   return (
     <div style={{ marginBottom: "16px" }}>
       <div style={{ position: "relative", marginBottom: "12px" }}>
@@ -920,6 +913,14 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange }) {
           onFocus={e => e.target.style.borderColor = "#3C7CE8"} onBlur={e => e.target.style.borderColor = "#E5E7EB"} />
       </div>
       <div style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "4px" }}>
+        <button onClick={() => onFilterChange("saved")} style={{
+          background: activeFilter === "saved" ? "#E8453C" : "white",
+          color: activeFilter === "saved" ? "white" : "#E8453C",
+          border: activeFilter === "saved" ? "none" : "1px solid #FECACA",
+          borderRadius: "12px", padding: "6px 14px", cursor: "pointer",
+          fontFamily: "'DM Sans'", fontSize: "12px", fontWeight: 600,
+          whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "4px",
+        }}>🔖 Saved{savedItems.length > 0 ? ` (${savedItems.length})` : ""}</button>
         {FILTER_TABS.map(t => (
           <button key={t.key} onClick={() => onFilterChange(t.key)} style={{
             background: activeFilter === t.key ? "#1a1a1a" : "white",
@@ -931,6 +932,31 @@ function SearchBar({ query, onQueryChange, activeFilter, onFilterChange }) {
           }}>{t.icon} {t.label}</button>
         ))}
       </div>
+      {activeFilter === "saved" && (
+        <div style={{ marginTop: "12px" }}>
+          {savedItems.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "24px", fontFamily: "'DM Sans'", fontSize: "13px", color: "#9CA3AF" }}>
+              <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔖</div>
+              No saved items yet. Tap 📌 on any post to save it.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {savedItems.map(s => (
+                <div key={s.id} style={{ background: "white", borderRadius: "14px", padding: "12px 16px", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "20px" }}>
+                    {s.media?.type === "book" ? "📚" : s.media?.type === "spotify" ? "🎵" : s.media?.type === "movie" ? "🎥" : s.media?.type === "place" ? "📍" : "📄"}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.media?.title || s.media?.name || "Saved item"}</div>
+                    <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>{s.media?.author || s.media?.artist || s.media?.location || s.media?.type}</div>
+                  </div>
+                  <button onClick={() => onUnsave?.(s.id)} style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "4px 8px", cursor: "pointer", fontSize: "12px" }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1152,10 +1178,15 @@ export default function App() {
   const [clubItem, setClubItem] = useState(null);
   const [clubPicks, setClubPicks] = useState([]);
   const [savedIds, setSavedIds] = useState(new Set());
+  const [savedItems, setSavedItems] = useState([]);
   const [dailyCount, setDailyCount] = useState(0);
   const [lang, setLang] = useState("en");
   const [bgKey, setBgKey] = useState("warm");
   const [showSettings, setShowSettings] = useState(false);
+  const [profileName, setProfileName] = useState(CURRENT_USER_DEFAULT.name);
+  const [profileEmoji, setProfileEmoji] = useState(CURRENT_USER_DEFAULT.emoji);
+  const [profileColor, setProfileColor] = useState(CURRENT_USER_DEFAULT.color);
+  const CURRENT_USER = useMemo(() => ({ name: profileName, emoji: profileEmoji, color: profileColor }), [profileName, profileEmoji, profileColor]);
   const rIdRef = useRef(100);
   const bgTheme = BG_COLORS.find(b => b.key === bgKey) || BG_COLORS[0];
   const isDark = bgKey === "dark";
@@ -1174,10 +1205,10 @@ export default function App() {
 
   // Load saves and daily count and club picks on mount
   useEffect(() => {
-    apiGetSaves(CURRENT_USER.name).then(saves => setSavedIds(new Set(saves.map(s => s.postId))));
+    apiGetSaves(CURRENT_USER.name).then(saves => { setSavedIds(new Set(saves.map(s => s.postId))); setSavedItems(saves); });
     apiGetDailyCount(CURRENT_USER.name).then(c => setDailyCount(c));
     apiGetClubPicks().then(picks => setClubPicks(picks));
-  }, []);
+  }, [CURRENT_USER.name]);
 
   const addReaction = useCallback((postId, emoji) => {
     const id = ++rIdRef.current;
@@ -1210,10 +1241,20 @@ export default function App() {
   const savePost = useCallback(async (post) => {
     if (savedIds.has(post.id)) return;
     try {
-      await apiSavePost(CURRENT_USER.name, post.id, post.media?.type, post.media);
+      const result = await apiSavePost(CURRENT_USER.name, post.id, post.media?.type, post.media);
       setSavedIds(prev => new Set([...prev, post.id]));
+      setSavedItems(prev => [{ id: result.id, postId: post.id, media: post.media, savedAt: new Date().toISOString() }, ...prev]);
     } catch (err) { console.error("savePost error:", err); }
-  }, [savedIds]);
+  }, [savedIds, CURRENT_USER.name]);
+
+  const unsaveItem = useCallback(async (saveId) => {
+    try {
+      await apiDeleteSave(saveId);
+      const item = savedItems.find(s => s.id === saveId);
+      if (item) setSavedIds(prev => { const n = new Set(prev); n.delete(item.postId); return n; });
+      setSavedItems(prev => prev.filter(s => s.id !== saveId));
+    } catch (err) { console.error("unsave error:", err); }
+  }, [savedItems]);
 
   // ── Group membership logic ──
   const [randomSeed, setRandomSeed] = useState(0);
@@ -1341,6 +1382,25 @@ export default function App() {
           {showSettings && (
             <div style={{ maxWidth: "600px", margin: "12px auto 0", background: isDark ? "#1f2937" : "white", borderRadius: "16px", padding: "16px", border: `1px solid ${isDark ? "#374151" : "#E5E7EB"}`, animation: "fadeSlideUp 0.2s ease" }}>
               <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
+                {/* Profile */}
+                <div>
+                  <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Profile</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: profileColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{profileEmoji}</div>
+                    <input value={profileName} onChange={e => setProfileName(e.target.value.slice(0, 12))} style={{ border: `1px solid ${isDark ? "#4B5563" : "#D1D5DB"}`, borderRadius: "8px", padding: "6px 10px", fontFamily: "'DM Sans'", fontSize: "13px", width: "100px", outline: "none", background: isDark ? "#374151" : "white", color: isDark ? "#F9FAFB" : "#1a1a1a" }} />
+                  </div>
+                  <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", maxWidth: "200px" }}>
+                    {PROFILE_EMOJIS.map(e => (
+                      <button key={e} onClick={() => setProfileEmoji(e)} style={{ width: "28px", height: "28px", borderRadius: "8px", border: profileEmoji === e ? "2px solid #E8453C" : "1px solid transparent", background: isDark ? "#374151" : "#F9FAFB", cursor: "pointer", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>{e}</button>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: "4px", marginTop: "6px" }}>
+                    {["#E8453C","#3C7CE8","#8B5CF6","#059669","#F59E0B","#EC4899","#14B8A6","#6366F1","#EA580C","#0EA5E9"].map(c => (
+                      <button key={c} onClick={() => setProfileColor(c)} style={{ width: "20px", height: "20px", borderRadius: "50%", background: c, border: profileColor === c ? "3px solid #1a1a1a" : "2px solid transparent", cursor: "pointer" }} />
+                    ))}
+                  </div>
+                </div>
+                {/* Language */}
                 <div>
                   <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{t.language}</div>
                   <div style={{ display: "flex", gap: "6px" }}>
@@ -1349,6 +1409,7 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+                {/* Background */}
                 <div>
                   <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{t.background}</div>
                   <div style={{ display: "flex", gap: "6px" }}>
@@ -1363,7 +1424,7 @@ export default function App() {
         </header>
 
         <main style={{ maxWidth: "600px", margin: "20px auto", padding: "0 16px 60px" }}>
-          {page === "search" && <SearchBar query={searchQuery} onQueryChange={setSearchQuery} activeFilter={activeFilter} onFilterChange={setActiveFilter} />}
+          {page === "search" && <SearchBar query={searchQuery} onQueryChange={setSearchQuery} activeFilter={activeFilter} onFilterChange={setActiveFilter} savedItems={savedItems} onUnsave={unsaveItem} />}
           {page === "item" && viewingItem && <ItemDetailPage mediaKey={viewingItem} posts={posts} onBack={() => { setPage("feed"); setViewingItem(null); }} onAddReaction={addReaction} onRemoveReaction={removeReaction} />}
           {page !== "item" && (
             <>
@@ -1392,7 +1453,7 @@ export default function App() {
                   </div>
                 )}
                 {!loading && filteredPosts.map(post => (
-                  <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} onSave={savePost} savedIds={savedIds} />
+                  <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} onSave={savePost} savedIds={savedIds} currentUser={CURRENT_USER} />
                 ))}
                 {!loading && page === "feed" && filteredPosts.length === 0 && (
                   <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
@@ -1406,7 +1467,7 @@ export default function App() {
           )}
         </main>
       </div>
-      {composing && <ComposeModal onClose={() => setComposing(false)} onPublish={publishPost} dailyCount={dailyCount} />}
+      {composing && <ComposeModal onClose={() => setComposing(false)} onPublish={publishPost} dailyCount={dailyCount} currentUser={CURRENT_USER} />}
     </LangContext.Provider>
   );
 }
