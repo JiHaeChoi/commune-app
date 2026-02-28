@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext } from "react";
 
-const FONTS_CSS = `@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');`;
+const FONTS_CSS = `@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');`;
 
 const AVATARS = [
   { name: "Mika", color: "#E8453C", emoji: "🦊" },
@@ -9,30 +9,118 @@ const AVATARS = [
   { name: "Ren", color: "#059669", emoji: "🌿" },
   { name: "Lux", color: "#F59E0B", emoji: "✨" },
   { name: "Kai", color: "#EC4899", emoji: "🦩" },
+  { name: "Nori", color: "#14B8A6", emoji: "🐙" },
+  { name: "Hana", color: "#F43F5E", emoji: "🌸" },
+  { name: "Zion", color: "#6366F1", emoji: "🚀" },
+  { name: "Maru", color: "#EA580C", emoji: "🍊" },
+  { name: "Yuki", color: "#0EA5E9", emoji: "❄️" },
+  { name: "Fern", color: "#16A34A", emoji: "🌾" },
 ];
-// ── Persistent randomized user ──
-function getOrCreateUser() {
-  try {
-    const raw = localStorage.getItem("commune_user");
-    if (raw) {
-      const u = JSON.parse(raw);
-      if (u && u.name && u.color && u.emoji && u.id) return u;
-    }
-  } catch {}
-  // First visit: random avatar + UUID
-  const avatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
-  const user = { ...avatar, id: crypto.randomUUID() };
-  try { localStorage.setItem("commune_user", JSON.stringify(user)); } catch {}
-  return user;
-}
-// Module-level initial read; App manages live state via useState
-const INITIAL_USER = getOrCreateUser();
+const CURRENT_USER = AVATARS[1];
 const REACTION_EMOJIS = ["❤️", "🔥", "😂", "🤯", "💀", "🥺", "👏", "✨"];
-<<<<<<< HEAD
-const REACTION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
-=======
->>>>>>> 08105c9 (Update search)
 const MAX_WORDS = 150;
+
+const BG_COLORS = [
+  { key: "warm",   label: "Warm",   bg: "linear-gradient(180deg, #F5F3EF 0%, #EDE9E3 100%)", headerBg: "rgba(245,243,239,0.85)" },
+  { key: "cool",   label: "Cool",   bg: "linear-gradient(180deg, #EEF2FF 0%, #E0E7FF 100%)", headerBg: "rgba(238,242,255,0.85)" },
+  { key: "dark",   label: "Dark",   bg: "linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)", headerBg: "rgba(26,26,46,0.92)" },
+  { key: "sage",   label: "Sage",   bg: "linear-gradient(180deg, #F0F5F0 0%, #E2EBE2 100%)", headerBg: "rgba(240,245,240,0.85)" },
+  { key: "peach",  label: "Peach",  bg: "linear-gradient(180deg, #FFF5F0 0%, #FFE8DB 100%)", headerBg: "rgba(255,245,240,0.85)" },
+];
+
+// ── i18n ──
+const LANG = {
+  en: {
+    commune: "commune",
+    tagline: "share what moves you",
+    discover: "Discover",
+    share: "Share",
+    publish: "Publish",
+    feed: "Feed",
+    search: "Search",
+    randomCircle: "Random Circle",
+    sharedTaste: "Shared Taste",
+    club: "Club",
+    members: "members",
+    matches: "matches",
+    readTogether: "Read together",
+    manage: "Manage",
+    hide: "Hide",
+    exclude: "Exclude",
+    excluded: "Excluded",
+    noPostsGroup: "No posts in this group yet",
+    shareMore: "Share more items to find people with similar taste!",
+    beFirst: "Be the first to share something!",
+    noResults: "No results for",
+    tryDifferent: "Try a different search or filter",
+    loading: "Loading posts...",
+    backToFeed: "← Back to feed",
+    thoughts: "thoughts",
+    react: "React",
+    viewAll: "View all thoughts →",
+    whatSharing: "What are you sharing?",
+    pasteUrl: "Paste any URL to auto-detect",
+    orChoose: "— or choose a type —",
+    overLimit: "Over word limit",
+    addItemToPublish: "Add item + thoughts to publish",
+    all: "All",
+    books: "Books",
+    music: "Music",
+    movies: "Movies",
+    places: "Places",
+    podcasts: "Podcasts",
+    articles: "Articles",
+    settings: "Settings",
+    language: "Language",
+    background: "Background",
+  },
+  ko: {
+    commune: "commune",
+    tagline: "감동을 나누다",
+    discover: "탐색",
+    share: "공유",
+    publish: "게시",
+    feed: "피드",
+    search: "검색",
+    randomCircle: "랜덤 서클",
+    sharedTaste: "취향 공유",
+    club: "클럽",
+    members: "명",
+    matches: "매칭",
+    readTogether: "함께 읽기",
+    manage: "관리",
+    hide: "숨기기",
+    exclude: "제외",
+    excluded: "제외됨",
+    noPostsGroup: "이 그룹에 아직 글이 없어요",
+    shareMore: "더 많이 공유해서 취향이 비슷한 사람을 찾아보세요!",
+    beFirst: "첫 번째로 공유해보세요!",
+    noResults: "검색 결과 없음:",
+    tryDifferent: "다른 검색어나 필터를 시도해보세요",
+    loading: "로딩 중...",
+    backToFeed: "← 피드로 돌아가기",
+    thoughts: "개의 생각",
+    react: "반응",
+    viewAll: "모든 생각 보기 →",
+    whatSharing: "무엇을 공유할까요?",
+    pasteUrl: "URL을 붙여넣으면 자동 감지",
+    orChoose: "— 또는 유형 선택 —",
+    overLimit: "글자 수 초과",
+    addItemToPublish: "아이템 + 생각을 추가해주세요",
+    all: "전체",
+    books: "책",
+    music: "음악",
+    movies: "영화",
+    places: "장소",
+    podcasts: "팟캐스트",
+    articles: "아티클",
+    settings: "설정",
+    language: "언어",
+    background: "배경",
+  },
+};
+const LangContext = createContext("en");
+function useT() { const lang = useContext(LangContext); return LANG[lang] || LANG.en; }
 
 const CUISINE_OPTIONS = ["Korean","Japanese","Chinese","Thai","Vietnamese","Indian","Italian","French","Mexican","American","Mediterranean","Café","Bakery","Bar","Brunch","Fine Dining","Street Food","Vegan","Seafood","BBQ","Pizza","Ramen","Sushi","Other"];
 
@@ -124,15 +212,6 @@ function volToBook(vol) {
 
 async function searchBooks(query) {
   const isIsbn = isISBN(query);
-<<<<<<< HEAD
-  const q = isIsbn ? `isbn:${query.replace(/[-\s]/g, "")}` : encodeURIComponent(query);
-  const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=${isIsbn ? 1 : 6}`);
-  if (res.ok) {
-    const data = await res.json();
-    if (data.items?.length) return data.items.map(item => volToBook(item.volumeInfo));
-  }
-  // Fallback: Korean National Library (NL) API via Cloudflare Worker proxy
-=======
   // Try Google Books first
   try {
     const q = isIsbn ? `isbn:${query.replace(/[-\s]/g, "")}` : encodeURIComponent(query);
@@ -171,7 +250,6 @@ async function searchBooks(query) {
     }
   } catch {}
   // Fallback 2: Korean National Library (NL) API via Worker proxy
->>>>>>> 08105c9 (Update search)
   if (isIsbn && WORKER_URL) {
     try {
       const clean = query.replace(/[-\s]/g, "");
@@ -391,59 +469,13 @@ function MediaCard({ media, compact }) {
   return null;
 }
 
-
-
 /* ═══════════════════════════════════════════════
-   REACTION BAR  (24-hour persistent badges)
+   FLOATING REACTION
    ═══════════════════════════════════════════════ */
-<<<<<<< HEAD
-function reactionTimeLeft(createdAt) {
-  const remaining = REACTION_EXPIRY_MS - (Date.now() - createdAt);
-  if (remaining <= 0) return null;
-  const h = Math.floor(remaining / 3600000);
-  const m = Math.floor((remaining % 3600000) / 60000);
-  if (h > 0) return `${h}h left`;
-  if (m > 0) return `${m}m left`;
-  return "< 1m left";
-}
-
-function ReactionBar({ reactions }) {
-  // Group by emoji, filter expired
-  const now = Date.now();
-  const active = reactions.filter(r => !r.createdAt || (now - r.createdAt) < REACTION_EXPIRY_MS);
-  if (!active.length) return null;
-
-  const grouped = {};
-  active.forEach(r => {
-    if (!grouped[r.emoji]) grouped[r.emoji] = [];
-    grouped[r.emoji].push(r);
-  });
-
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-      {Object.entries(grouped).map(([emoji, rs]) => {
-        const oldest = Math.min(...rs.map(r => r.createdAt || Date.now()));
-        const label = reactionTimeLeft(oldest);
-        const names = rs.map(r => r.userId).filter(Boolean).join(", ");
-        return (
-          <div key={emoji} title={names ? `${names}${label ? " · " + label : ""}` : label || ""}
-            style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(0,0,0,0.04)", borderRadius: "20px", padding: "4px 10px", cursor: "default", userSelect: "none" }}>
-            <span style={{ fontSize: "16px", lineHeight: 1 }}>{emoji}</span>
-            {rs.length > 1 && (
-              <span style={{ fontFamily: "'DM Sans'", fontSize: "12px", fontWeight: 600, color: "#374151" }}>{rs.length}</span>
-            )}
-            {label && (
-              <span style={{ fontFamily: "'DM Sans'", fontSize: "10px", color: "#9CA3AF", marginLeft: "1px" }}>{label}</span>
-            )}
-          </div>
-        );
-      })}
-=======
 function FloatingReaction({ emoji, onComplete }) {
   return (
     <div style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.95)", borderRadius: "20px", padding: "4px 10px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
       <span style={{ fontSize: "16px" }}>{emoji}</span>
->>>>>>> 08105c9 (Update search)
     </div>
   );
 }
@@ -713,7 +745,7 @@ function ContentLinker({ onAdd }) {
 /* ═══════════════════════════════════════════════
    POST
    ═══════════════════════════════════════════════ */
-function Post({ post, onAddReaction, onViewItem }) {
+function Post({ post, onAddReaction, onRemoveReaction, onViewItem }) {
   const [showReactions, setShowReactions] = useState(false);
   return (
     <article style={{ background: "white", borderRadius: "24px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.04)", animation: "fadeSlideUp 0.4s ease" }}>
@@ -723,7 +755,7 @@ function Post({ post, onAddReaction, onViewItem }) {
       </div>
       <p style={{ fontFamily: "'DM Sans'", fontSize: "15px", lineHeight: 1.65, color: "#374151", margin: "0 0 18px 0" }}>{post.text}</p>
       {post.media && <div style={{ marginBottom: "18px", cursor: "pointer" }} onClick={() => onViewItem(getMediaKey(post.media))}><MediaCard media={post.media} compact /></div>}
-      {post.reactions.length > 0 && <ReactionBar reactions={post.reactions} />}
+      {post.reactions.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>{post.reactions.map(r => <FloatingReaction key={r.id} emoji={r.emoji} onComplete={() => onRemoveReaction(post.id, r.id)} />)}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", paddingTop: "14px", borderTop: "1px solid #F3F4F6", position: "relative" }}>
         <button onClick={() => setShowReactions(!showReactions)} style={{ background: showReactions ? "#FEF2F2" : "#F9FAFB", border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: showReactions ? "#E8453C" : "#6B7280", fontWeight: 500 }}>😊 React</button>
         {post.media && <button onClick={() => onViewItem(getMediaKey(post.media))} style={{ marginLeft: "auto", background: "#F9FAFB", border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "12px", color: "#6B7280", fontWeight: 500 }}>View all thoughts →</button>}
@@ -736,7 +768,7 @@ function Post({ post, onAddReaction, onViewItem }) {
 /* ═══════════════════════════════════════════════
    ITEM DETAIL PAGE
    ═══════════════════════════════════════════════ */
-function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction }) {
+function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction, onRemoveReaction }) {
   const relatedPosts = posts.filter(p => getMediaKey(p.media) === mediaKey);
   const media = relatedPosts[0]?.media;
   if (!media) return null;
@@ -755,7 +787,7 @@ function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction }) {
               <div><div style={{ fontFamily: "'DM Sans'", fontWeight: 600, fontSize: "14px", color: "#1a1a1a" }}>{post.author.name}</div><div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF" }}>{post.time}</div></div>
             </div>
             <p style={{ fontFamily: "'DM Sans'", fontSize: "14px", lineHeight: 1.6, color: "#374151", margin: 0 }}>{post.text}</p>
-            {post.reactions.length > 0 && <div style={{ marginTop: "12px" }}><ReactionBar reactions={post.reactions} /></div>}
+            {post.reactions.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "12px" }}>{post.reactions.map(r => <FloatingReaction key={r.id} emoji={r.emoji} onComplete={() => onRemoveReaction(post.id, r.id)} />)}</div>}
           </div>
         ))}
       </div>
@@ -764,106 +796,9 @@ function ItemDetailPage({ mediaKey, posts, onBack, onAddReaction }) {
 }
 
 /* ═══════════════════════════════════════════════
-   PROFILE EDITOR MODAL
-   ═══════════════════════════════════════════════ */
-function ProfileEditor({ currentUser, onSave, onClose }) {
-  const [name, setName] = useState(currentUser.name);
-  const [selectedAvatar, setSelectedAvatar] = useState(currentUser);
-  const trimmed = name.trim();
-  const canSave = trimmed.length > 0 && trimmed.length <= 20;
-
-  const handleSave = () => {
-    if (!canSave) return;
-    const updated = { id: currentUser.id, name: trimmed, color: selectedAvatar.color, emoji: selectedAvatar.emoji };
-    try { localStorage.setItem("commune_user", JSON.stringify(updated)); } catch {}
-    onSave(updated);
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, animation: "fadeIn 0.2s ease" }}
-      onClick={onClose}>
-      <div onClick={e => e.stopPropagation()}
-        style={{ background: "white", borderRadius: "28px", padding: "32px", width: "92%", maxWidth: "400px", boxShadow: "0 24px 64px rgba(0,0,0,0.18)", animation: "fadeSlideUp 0.25s ease" }}>
-
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-          <h2 style={{ fontFamily: "'Instrument Serif'", fontSize: "22px", margin: 0, fontStyle: "italic" }}>Your profile</h2>
-          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", width: "34px", height: "34px", borderRadius: "10px", cursor: "pointer", fontSize: "16px", color: "#6B7280", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
-        </div>
-
-        {/* Live preview */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", background: "linear-gradient(135deg, #F9FAFB, #F3F4F6)", borderRadius: "16px", padding: "14px 16px", marginBottom: "24px", border: "1px solid #E5E7EB" }}>
-          <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: selectedAvatar.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
-            {selectedAvatar.emoji}
-          </div>
-          <div>
-            <div style={{ fontFamily: "'DM Sans'", fontWeight: 600, fontSize: "16px", color: trimmed ? "#1a1a1a" : "#9CA3AF" }}>
-              {trimmed || "Enter your name…"}
-            </div>
-            <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#9CA3AF", marginTop: "2px" }}>
-              ID: {currentUser.id.slice(0, 8)}…
-            </div>
-          </div>
-        </div>
-
-        {/* Name input */}
-        <div style={{ marginBottom: "20px" }}>
-          <label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", display: "block" }}>
-            Display Name
-          </label>
-          <input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSave()}
-            maxLength={20}
-            placeholder="Your name"
-            autoFocus
-            style={{ width: "100%", border: `1px solid ${!trimmed && name.length > 0 ? "#FCA5A5" : "#E5E7EB"}`, borderRadius: "12px", padding: "10px 14px", fontFamily: "'DM Sans'", fontSize: "15px", outline: "none", background: "white", color: "#1a1a1a", boxSizing: "border-box" }}
-          />
-          {!trimmed && name.length > 0 && (
-            <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", color: "#EF4444", marginTop: "4px" }}>Name can't be empty</div>
-          )}
-        </div>
-
-        {/* Avatar grid */}
-        <div style={{ marginBottom: "28px" }}>
-          <label style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px", display: "block" }}>
-            Avatar
-          </label>
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            {AVATARS.map(a => {
-              const isSelected = selectedAvatar.emoji === a.emoji;
-              return (
-                <button key={a.emoji} onClick={() => setSelectedAvatar(a)}
-                  style={{ width: "54px", height: "54px", borderRadius: "16px", background: a.color, border: isSelected ? "3px solid #1a1a1a" : "3px solid transparent", cursor: "pointer", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.15s, border 0.1s", transform: isSelected ? "scale(1.12)" : "scale(1)", boxShadow: isSelected ? "0 4px 14px rgba(0,0,0,0.18)" : "none" }}>
-                  {a.emoji}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={onClose}
-            style={{ flex: 1, background: "#F3F4F6", border: "none", borderRadius: "14px", padding: "12px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "14px", color: "#6B7280", fontWeight: 500 }}>
-            Cancel
-          </button>
-          <button onClick={handleSave} disabled={!canSave}
-            style={{ flex: 2, background: canSave ? "#1a1a1a" : "#E5E7EB", border: "none", borderRadius: "14px", padding: "12px", cursor: canSave ? "pointer" : "default", fontFamily: "'DM Sans'", fontSize: "14px", color: canSave ? "white" : "#9CA3AF", fontWeight: 600, transition: "background 0.15s" }}>
-            Save changes
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-/* ═══════════════════════════════════════════════
    COMPOSE MODAL
    ═══════════════════════════════════════════════ */
-function ComposeModal({ onClose, onPublish, currentUser }) {
+function ComposeModal({ onClose, onPublish }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState(null);
   const canPublish = text.trim() && countWords(text) <= MAX_WORDS && media;
@@ -875,7 +810,7 @@ function ComposeModal({ onClose, onPublish, currentUser }) {
           <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", width: "36px", height: "36px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280" }}>×</button>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "4px" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: currentUser.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{currentUser.emoji}</div>
+          <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: CURRENT_USER.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{CURRENT_USER.emoji}</div>
           <LimitedTextarea value={text} onChange={setText} placeholder="Share your thoughts..." />
         </div>
         {(!text.trim() || !media) && <div style={{ fontFamily: "'DM Sans'", fontSize: "12px", color: "#9CA3AF", marginBottom: "12px", padding: "8px 12px", background: "#F9FAFB", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}><span>💡</span>{!media && !text.trim() ? "Add an item and share your thoughts" : !media ? "Now link an item below" : "Write your thoughts to publish"}</div>}
@@ -1049,11 +984,7 @@ async function fetchPosts() {
       time: timeAgo(p.createdAt),
       text: p.text,
       media: p.media,
-<<<<<<< HEAD
-      reactions: (p.reactions || []).map(r => ({ ...r, createdAt: r.createdAt || Date.now() })),
-=======
       reactions: p.reactions || [],
->>>>>>> 08105c9 (Update search)
     }));
   } catch (err) { console.error("fetchPosts error:", err); return []; }
 }
@@ -1088,11 +1019,6 @@ async function apiAddReaction(postId, emoji, userName) {
 export default function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
-  const [currentUser, setCurrentUser] = useState(INITIAL_USER);
-  const [editingProfile, setEditingProfile] = useState(false);
-=======
->>>>>>> 08105c9 (Update search)
   const [composing, setComposing] = useState(false);
   const [page, setPage] = useState("feed");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1101,7 +1027,12 @@ export default function App() {
   const [activeGroup, setActiveGroup] = useState("random");
   const [excludedUsers, setExcludedUsers] = useState([]);
   const [clubItem, setClubItem] = useState(null);
+  const [lang, setLang] = useState("en");
+  const [bgKey, setBgKey] = useState("warm");
+  const [showSettings, setShowSettings] = useState(false);
   const rIdRef = useRef(100);
+  const bgTheme = BG_COLORS.find(b => b.key === bgKey) || BG_COLORS[0];
+  const isDark = bgKey === "dark";
 
   // Load posts from API on mount + auto-refresh every 30s
   useEffect(() => {
@@ -1113,8 +1044,6 @@ export default function App() {
     load();
     const interval = setInterval(load, 300000); // 5분마다 새 포스트 확인
     return () => { active = false; clearInterval(interval); };
-<<<<<<< HEAD
-=======
   }, []);
 
   const addReaction = useCallback((postId, emoji) => {
@@ -1125,126 +1054,6 @@ export default function App() {
       return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
     }));
     // Fire-and-forget to API
-    apiAddReaction(postId, emoji, CURRENT_USER.name);
-  }, []);
-  const removeReaction = useCallback((postId, rid) => {
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, reactions: p.reactions.filter(r => r.id !== rid) } : p));
-  }, []);
-  const publishPost = useCallback(async (text, media) => {
-    // Optimistic UI update
-    const tempId = "temp-" + Date.now();
-    setPosts(prev => [{ id: tempId, author: CURRENT_USER, time: "just now", text, media, reactions: [] }, ...prev]);
-    try {
-      const result = await apiCreatePost(CURRENT_USER, text, media);
-      // Replace temp ID with real ID
-      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
-    } catch {
-      // Remove on failure
-      setPosts(prev => prev.filter(p => p.id !== tempId));
-    }
-  }, []);
-
-  // ── Group membership logic ──
-  const randomGroupMembers = useMemo(() => {
-    const allUsers = AVATARS.filter(a => a.name !== CURRENT_USER.name);
-    const shuffled = [...allUsers].sort((a, b) => {
-      const ha = a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1);
-      const hb = b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1);
-      return ha - hb;
-    });
-    return shuffled.slice(0, 3);
->>>>>>> 08105c9 (Update search)
-  }, []);
-
-  const addReaction = useCallback((postId, emoji) => {
-    const id = ++rIdRef.current;
-    setPosts(prev => prev.map(p => {
-      if (p.id !== postId) return p;
-      const filtered = p.reactions.filter(r => r.userId !== currentUser.name);
-      return { ...p, reactions: [...filtered, { id, emoji, userId: currentUser.name, createdAt: Date.now() }] };
-    }));
-    // Fire-and-forget to API
-    apiAddReaction(postId, emoji, currentUser.name);
-  }, [currentUser]);
-  const publishPost = useCallback(async (text, media) => {
-    // Optimistic UI update
-    const tempId = "temp-" + Date.now();
-    setPosts(prev => [{ id: tempId, author: currentUser, time: "just now", text, media, reactions: [] }, ...prev]);
-    try {
-      const result = await apiCreatePost(currentUser, text, media);
-      // Replace temp ID with real ID
-      setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
-    } catch {
-      // Remove on failure
-      setPosts(prev => prev.filter(p => p.id !== tempId));
-    }
-  }, [currentUser]);
-
-  // ── Group membership logic ──
-  // Derive unique authors from API posts (excludes self)
-  const allOtherAuthors = useMemo(() => {
-    const seen = new Map(); // name -> author object (latest)
-    posts.forEach(p => {
-      if (p.author?.name && p.author.name !== currentUser.name) {
-        seen.set(p.author.name, p.author);
-      }
-    });
-    return Array.from(seen.values());
-  }, [posts, currentUser]);
-
-  // Random circle: stable per-session shuffle seeded by currentUser.id
-  const randomGroupMembers = useMemo(() => {
-    if (!allOtherAuthors.length) return [];
-    // Seed with user id so the same user always gets the same circle
-    const seed = currentUser.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const shuffled = [...allOtherAuthors].sort((a, b) => {
-      const ha = (seed * 31 + a.name.charCodeAt(0)) % 997;
-      const hb = (seed * 31 + b.name.charCodeAt(0)) % 997;
-      return ha - hb;
-    });
-    return shuffled.slice(0, 4);
-  }, [allOtherAuthors, currentUser.id]);
-
-  // Similar group: real users from API posts who shared the same items
-  const similarGroupMembers = useMemo(() => {
-    const myMediaKeys = new Set(
-      posts.filter(p => p.author?.name === currentUser.name)
-           .map(p => getMediaKey(p.media)).filter(Boolean)
-    );
-    const userOverlap = {};
-    posts.forEach(p => {
-      if (!p.author?.name || p.author.name === currentUser.name) return;
-      const key = getMediaKey(p.media);
-      if (key && myMediaKeys.has(key)) {
-        userOverlap[p.author.name] = (userOverlap[p.author.name] || 0) + 1;
-      }
-    });
-    return allOtherAuthors
-      .filter(a => userOverlap[a.name] && !excludedUsers.includes(a.name))
-      .sort((a, b) => (userOverlap[b.name] || 0) - (userOverlap[a.name] || 0));
-  }, [posts, excludedUsers, currentUser, allOtherAuthors]);
-
-  // Club: random pairing with a specific item recommendation
-  const clubData = useMemo(() => {
-    // Pick a random item that multiple people posted about
-    const keyCount = {};
-    posts.forEach(p => { const k = getMediaKey(p.media); if (k) keyCount[k] = (keyCount[k] || 0) + 1; });
-    const popular = Object.entries(keyCount).filter(([, c]) => c >= 1).sort((a, b) => b[1] - a[1]);
-    const recommendedKey = clubItem || (popular[0]?.[0] || null);
-    const members = allOtherAuthors.slice(0, 4);
-    return { recommendedKey, members };
-<<<<<<< HEAD
-  }, [posts, clubItem, currentUser, allOtherAuthors]);
-=======
-  }, [posts, clubItem]);
-
-  const addReaction = useCallback((postId, emoji) => {
-    const id = ++rIdRef.current;
-    setPosts(prev => prev.map(p => {
-      if (p.id !== postId) return p;
-      const filtered = p.reactions.filter(r => r.userId !== CURRENT_USER.name);
-      return { ...p, reactions: [...filtered, { id, emoji, userId: CURRENT_USER.name }] };
-    }));
     apiAddReaction(postId, emoji, CURRENT_USER.name);
   }, []);
   const removeReaction = useCallback((postId, rid) => {
@@ -1258,10 +1067,45 @@ export default function App() {
       setPosts(prev => prev.map(p => p.id === tempId ? { ...p, id: result.id } : p));
     } catch (err) {
       console.error("publishPost error:", err);
-      // Keep the post in UI even if API fails (offline-friendly)
     }
   }, []);
->>>>>>> 08105c9 (Update search)
+
+  // ── Group membership logic ──
+  const randomGroupMembers = useMemo(() => {
+    const allUsers = AVATARS.filter(a => a.name !== CURRENT_USER.name);
+    const shuffled = [...allUsers].sort((a, b) => {
+      const ha = a.name.charCodeAt(0) * 31 + a.name.charCodeAt(1);
+      const hb = b.name.charCodeAt(0) * 31 + b.name.charCodeAt(1);
+      return ha - hb;
+    });
+    return shuffled.slice(0, 3);
+  }, []);
+
+  // Similar group: people who share the same items as you
+  const similarGroupMembers = useMemo(() => {
+    const myMediaKeys = new Set(posts.filter(p => p.author.name === CURRENT_USER.name).map(p => getMediaKey(p.media)).filter(Boolean));
+    const userOverlap = {};
+    posts.forEach(p => {
+      if (p.author.name === CURRENT_USER.name) return;
+      const key = getMediaKey(p.media);
+      if (key && myMediaKeys.has(key)) {
+        userOverlap[p.author.name] = (userOverlap[p.author.name] || 0) + 1;
+      }
+    });
+    return AVATARS.filter(a => a.name !== CURRENT_USER.name && userOverlap[a.name] && !excludedUsers.includes(a.name))
+      .sort((a, b) => (userOverlap[b.name] || 0) - (userOverlap[a.name] || 0));
+  }, [posts, excludedUsers]);
+
+  // Club: random pairing with a specific item recommendation
+  const clubData = useMemo(() => {
+    // Pick a random item that multiple people posted about
+    const keyCount = {};
+    posts.forEach(p => { const k = getMediaKey(p.media); if (k) keyCount[k] = (keyCount[k] || 0) + 1; });
+    const popular = Object.entries(keyCount).filter(([, c]) => c >= 1).sort((a, b) => b[1] - a[1]);
+    const recommendedKey = clubItem || (popular[0]?.[0] || null);
+    const members = AVATARS.filter(a => a.name !== CURRENT_USER.name).slice(0, 4);
+    return { recommendedKey, members };
+  }, [posts, clubItem]);
 
   const filteredPosts = useMemo(() => {
     let result = posts;
@@ -1269,15 +1113,6 @@ export default function App() {
     // ── Group filtering (feed page only — search page shows all) ──
     if (page === "feed") {
       if (activeGroup === "random") {
-<<<<<<< HEAD
-        const names = new Set([currentUser.name, ...randomGroupMembers.map(m => m.name)]);
-        result = result.filter(p => names.has(p.author?.name));
-      } else if (activeGroup === "similar") {
-        const names = new Set([currentUser.name, ...similarGroupMembers.map(m => m.name)]);
-        result = result.filter(p => names.has(p.author?.name));
-      } else if (activeGroup === "club") {
-        const names = new Set([currentUser.name, ...clubData.members.map(m => m.name)]);
-=======
         const names = new Set([CURRENT_USER.name, ...randomGroupMembers.map(m => m.name)]);
         result = result.filter(p => names.has(p.author?.name));
       } else if (activeGroup === "similar") {
@@ -1285,7 +1120,6 @@ export default function App() {
         result = result.filter(p => names.has(p.author?.name));
       } else if (activeGroup === "club") {
         const names = new Set([CURRENT_USER.name, ...clubData.members.map(m => m.name)]);
->>>>>>> 08105c9 (Update search)
         result = result.filter(p => names.has(p.author?.name));
         if (clubData.recommendedKey) {
           result = result.sort((a, b) => {
@@ -1323,48 +1157,61 @@ export default function App() {
       });
     }
     return result;
-  }, [posts, activeFilter, searchQuery, page, activeGroup, randomGroupMembers, similarGroupMembers, clubData, excludedUsers, currentUser, allOtherAuthors]);
+  }, [posts, activeFilter, searchQuery, page, activeGroup, randomGroupMembers, similarGroupMembers, clubData, excludedUsers]);
 
   const handleViewItem = key => { setViewingItem(key); setPage("item"); };
+  const t = LANG[lang] || LANG.en;
 
   return (
-    <>
+    <LangContext.Provider value={lang}>
       <style>{FONTS_CSS}{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #F5F3EF; }
+        body { background: ${isDark ? "#1a1a2e" : "#F5F3EF"}; }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         ::selection { background: #E8453C22; }
         input::placeholder, textarea::placeholder { color: #9CA3AF; }
         ::-webkit-scrollbar { height: 4px; } ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 2px; }
       `}</style>
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #F5F3EF 0%, #EDE9E3 100%)" }}>
-        <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(245,243,239,0.85)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(0,0,0,0.04)", padding: "16px 24px" }}>
+      <div style={{ minHeight: "100vh", background: bgTheme.bg }}>
+        <header style={{ position: "sticky", top: 0, zIndex: 50, background: bgTheme.headerBg, backdropFilter: "blur(16px)", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"}`, padding: "16px 24px" }}>
           <div style={{ maxWidth: "600px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h1 onClick={() => { setPage("feed"); setViewingItem(null); }} style={{ fontFamily: "'Instrument Serif'", fontSize: "28px", color: "#1a1a1a", fontWeight: 400, fontStyle: "italic", cursor: "pointer" }}>commune</h1>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => setPage(page === "search" ? "feed" : "search")} style={{ background: page === "search" ? "#1a1a1a" : "#F3F4F6", color: page === "search" ? "white" : "#6B7280", border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 500 }}>🔍 Discover</button>
-              <button onClick={() => setEditingProfile(true)}
-                style={{ width: "36px", height: "36px", borderRadius: "12px", background: currentUser.color, border: "none", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-                title={currentUser.name}>
-                {currentUser.emoji}
-              </button>
-              <button onClick={() => setComposing(true)} style={{ background: "#1a1a1a", border: "none", borderRadius: "14px", padding: "8px 18px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 500 }}>+ Share</button>
+            <h1 onClick={() => { setPage("feed"); setViewingItem(null); }} style={{ fontFamily: "'Bungee'", fontSize: "24px", color: isDark ? "#F9FAFB" : "#1a1a1a", fontWeight: 400, cursor: "pointer", letterSpacing: "1px" }}>commune</h1>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button onClick={() => setShowSettings(!showSettings)} style={{ background: showSettings ? (isDark ? "#374151" : "#1a1a1a") : (isDark ? "#374151" : "#F3F4F6"), color: showSettings ? "white" : (isDark ? "#D1D5DB" : "#6B7280"), border: "none", borderRadius: "12px", padding: "8px 12px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px" }}>⚙️</button>
+              <button onClick={() => setPage(page === "search" ? "feed" : "search")} style={{ background: page === "search" ? "#1a1a1a" : (isDark ? "#374151" : "#F3F4F6"), color: page === "search" ? "white" : (isDark ? "#D1D5DB" : "#6B7280"), border: "none", borderRadius: "12px", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 500 }}>🔍 {t.discover}</button>
+              <button onClick={() => setComposing(true)} style={{ background: "#E8453C", border: "none", borderRadius: "14px", padding: "8px 18px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", color: "white", fontWeight: 500 }}>+ {t.share}</button>
             </div>
           </div>
+          {showSettings && (
+            <div style={{ maxWidth: "600px", margin: "12px auto 0", background: isDark ? "#1f2937" : "white", borderRadius: "16px", padding: "16px", border: `1px solid ${isDark ? "#374151" : "#E5E7EB"}`, animation: "fadeSlideUp 0.2s ease" }}>
+              <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{t.language}</div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    {[["en", "EN"], ["ko", "한"]].map(([k, label]) => (
+                      <button key={k} onClick={() => setLang(k)} style={{ background: lang === k ? "#1a1a1a" : (isDark ? "#374151" : "#F3F4F6"), color: lang === k ? "white" : (isDark ? "#D1D5DB" : "#6B7280"), border: "none", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontFamily: "'DM Sans'", fontSize: "13px", fontWeight: 600 }}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'DM Sans'", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{t.background}</div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    {BG_COLORS.map(b => (
+                      <button key={b.key} onClick={() => setBgKey(b.key)} style={{ width: "28px", height: "28px", borderRadius: "50%", background: b.bg, border: bgKey === b.key ? "3px solid #E8453C" : `2px solid ${isDark ? "#4B5563" : "#D1D5DB"}`, cursor: "pointer" }} title={b.label} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </header>
 
         <main style={{ maxWidth: "600px", margin: "20px auto", padding: "0 16px 60px" }}>
           {page === "search" && <SearchBar query={searchQuery} onQueryChange={setSearchQuery} activeFilter={activeFilter} onFilterChange={setActiveFilter} />}
-          {page === "item" && viewingItem && <ItemDetailPage mediaKey={viewingItem} posts={posts} onBack={() => { setPage("feed"); setViewingItem(null); }} onAddReaction={addReaction} />}
+          {page === "item" && viewingItem && <ItemDetailPage mediaKey={viewingItem} posts={posts} onBack={() => { setPage("feed"); setViewingItem(null); }} onAddReaction={addReaction} onRemoveReaction={removeReaction} />}
           {page !== "item" && (
             <>
-              {page === "feed" && (
-                <div style={{ background: "linear-gradient(135deg, #FEF2F2 0%, #FFF7ED 50%, #F0F9FF 100%)", borderRadius: "16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: "10px", border: "1px solid rgba(232,69,60,0.1)", marginBottom: "20px" }}>
-                  <span style={{ fontSize: "18px" }}>⏳</span>
-                  <span style={{ fontFamily: "'DM Sans'", fontSize: "13px", color: "#6B7280", lineHeight: 1.4 }}>Share an item + your thoughts (max {MAX_WORDS} words). Reactions are <strong style={{ color: "#E8453C" }}>ephemeral</strong>. Click any item to see all thoughts.</span>
-                </div>
-              )}
               {page === "feed" && (
                 <GroupSelector
                   activeGroup={activeGroup} onGroupChange={setActiveGroup}
@@ -1376,29 +1223,25 @@ export default function App() {
               {page === "search" && searchQuery && filteredPosts.length === 0 && (
                 <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
                   <div style={{ fontSize: "40px", marginBottom: "12px" }}>🔍</div>
-                  <div style={{ fontSize: "15px" }}>No results for "{searchQuery}"</div>
-                  <div style={{ fontSize: "13px", marginTop: "4px" }}>Try a different search or filter</div>
+                  <div style={{ fontSize: "15px" }}>{t.noResults} "{searchQuery}"</div>
+                  <div style={{ fontSize: "13px", marginTop: "4px" }}>{t.tryDifferent}</div>
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 {loading && (
                   <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
                     <div style={{ fontSize: "24px", marginBottom: "8px", animation: "fadeIn 0.5s ease infinite alternate" }}>⏳</div>
-                    <div style={{ fontSize: "14px" }}>Loading posts...</div>
+                    <div style={{ fontSize: "14px" }}>{t.loading}</div>
                   </div>
                 )}
                 {!loading && filteredPosts.map(post => (
-<<<<<<< HEAD
-                  <Post key={post.id} post={post} onAddReaction={addReaction} onViewItem={handleViewItem} />
-=======
                   <Post key={post.id} post={post} onAddReaction={addReaction} onRemoveReaction={removeReaction} onViewItem={handleViewItem} />
->>>>>>> 08105c9 (Update search)
                 ))}
                 {!loading && page === "feed" && filteredPosts.length === 0 && (
                   <div style={{ textAlign: "center", padding: "40px 20px", fontFamily: "'DM Sans'", color: "#9CA3AF" }}>
                     <div style={{ fontSize: "40px", marginBottom: "12px" }}>{activeGroup === "similar" ? "🔗" : "🎲"}</div>
-                    <div style={{ fontSize: "15px" }}>No posts in this group yet</div>
-                    <div style={{ fontSize: "13px", marginTop: "4px" }}>{activeGroup === "similar" ? "Share more items to find people with similar taste!" : "Be the first to share something!"}</div>
+                    <div style={{ fontSize: "15px" }}>{t.noPostsGroup}</div>
+                    <div style={{ fontSize: "13px", marginTop: "4px" }}>{activeGroup === "similar" ? t.shareMore : t.beFirst}</div>
                   </div>
                 )}
               </div>
@@ -1406,8 +1249,7 @@ export default function App() {
           )}
         </main>
       </div>
-      {composing && <ComposeModal onClose={() => setComposing(false)} onPublish={publishPost} currentUser={currentUser} />}
-      {editingProfile && <ProfileEditor currentUser={currentUser} onSave={u => { setCurrentUser(u); setEditingProfile(false); }} onClose={() => setEditingProfile(false)} />}
-    </>
+      {composing && <ComposeModal onClose={() => setComposing(false)} onPublish={publishPost} />}
+    </LangContext.Provider>
   );
 }
